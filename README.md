@@ -1,3 +1,17 @@
+Proof-of-Concept implementation for a sharding asynchronous BFT consensus framework.
+
+The code uses Dumbo-2 (Guo et al. CCS'2020) inside shards , and use loading pools to solve 
+
+cross-slice collaboration issues. The code is forked from the implementation of BDT protocol, 
+
+but actually it only uses Dumbo module and related Honeybadger part.
+
+
+
+Here down below is the original README.md of BDT
+
+# BDT
+
 Proof-of-Concept implementation for practical dual-mode asynchronous BFT consensus framework Bolt-Dumbo Transformer (BDT). 
 The code is forked from the implementation of Honeybadger-BFT protocol.
 The pessimistic fallback path is instantiated by Dumbo-2 (Guo et al. CCS'2020),
@@ -83,7 +97,7 @@ so the codebase also includes a PoC implementation for Dumbo-2 as a by-product.
     
     # Start Protocols at all remote AWS servers
     i=0; while [ $i -le $(( N-1 )) ]; do   ssh -i "/home/your-name/your-key-dir/your-sk.pem" ubuntu@${pubIPsVar[i]} "export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/lib; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib; cd dumbo; nohup python3 run_socket_node.py --sid 'sidA' --id $i --N $N --f $(( (N-1)/3 )) --B 10000 --K 11 --S 50 --T 2 --P "bdt" --F 1000000 > node-$i.out" &   i=$(( i+1 )); done
- 
+    
     # Download logs from all remote AWS servers to your local PC
     i=0
     while [ $i -le $(( N-1 )) ]
@@ -91,7 +105,7 @@ so the codebase also includes a PoC implementation for Dumbo-2 as a by-product.
       scp -i "/home/your-name/your-key-dir/your-sk.pem" ubuntu@${pubIPsVar[i]}:/home/ubuntu/dumbo/log/node-$i.log node-$i.log &
       i=$(( i+1 ))
     done
- 
+    
    ```
 
 Here down below is the original README.md of HoneyBadgerBFT
