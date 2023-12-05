@@ -1,0 +1,294 @@
+2023-12-03 18:48:40,850 dumbo_node.py [line:104] run INFO node 2's starts to run consensus on process id 10864 
+2023-12-03 18:48:40,850 dumbo_node.py [line:82] prepare_bootstrap INFO node id 2 is inserting dummy payload TXs 
+2023-12-03 18:48:41,059 dumbo_node.py [line:99] prepare_bootstrap INFO node id 2 completed the loading of dummy TXs 
+2023-12-03 18:49:23,891 dumbo_node.py [line:104] run INFO node 2's starts to run consensus on process id 11561 
+2023-12-03 18:49:23,892 dumbo_node.py [line:82] prepare_bootstrap INFO node id 2 is inserting dummy payload TXs 
+2023-12-03 18:49:23,949 dumbo_node.py [line:99] prepare_bootstrap INFO node id 2 completed the loading of dummy TXs 
+2023-12-03 18:49:51,958 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 12058 
+2023-12-03 18:49:51,958 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 18:49:52,094 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 18:50:28,545 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 12738 
+2023-12-03 18:50:28,546 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 18:50:28,610 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 18:52:11,168 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 14277 
+2023-12-03 18:52:11,169 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 18:52:11,234 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 18:57:39,245 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 18751 
+2023-12-03 18:57:39,245 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 18:57:39,280 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 19:05:02,733 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 24824 
+2023-12-03 19:05:02,733 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 19:05:02,853 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 19:06:50,106 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 26410 
+2023-12-03 19:06:50,107 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 19:06:50,245 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 19:07:33,822 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 27189 
+2023-12-03 19:07:33,823 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 19:07:33,858 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 20:42:28,262 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 13287 
+2023-12-03 20:42:28,263 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 20:42:28,375 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 20:43:30,900 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 14977 
+2023-12-03 20:43:30,902 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 20:43:31,032 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 20:45:01,231 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 17371 
+2023-12-03 20:45:01,231 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 20:45:01,345 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 20:46:37,332 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 19936 
+2023-12-03 20:46:37,332 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 20:46:37,438 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 20:48:31,613 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 22879 
+2023-12-03 20:48:31,614 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 20:48:31,975 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 20:53:15,995 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 29995 
+2023-12-03 20:53:15,995 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 20:53:16,076 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 20:54:00,397 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 31229 
+2023-12-03 20:54:00,397 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 20:54:00,470 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 20:55:37,750 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 33737 
+2023-12-03 20:55:37,751 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 20:55:37,807 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 20:58:13,861 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 37668 
+2023-12-03 20:58:13,862 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 20:58:13,921 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:00:10,371 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 40716 
+2023-12-03 21:00:10,371 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:00:10,433 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:05:00,634 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 48056 
+2023-12-03 21:05:00,634 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:05:00,783 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:06:37,681 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 50637 
+2023-12-03 21:06:37,682 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:06:37,798 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:08:12,892 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 53106 
+2023-12-03 21:08:12,893 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:08:12,948 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:10:11,738 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 56124 
+2023-12-03 21:10:11,739 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:10:11,788 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:11:28,446 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 58203 
+2023-12-03 21:11:28,446 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:11:28,483 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:12:29,497 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 59836 
+2023-12-03 21:12:29,498 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:12:29,543 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:14:57,407 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 63551 
+2023-12-03 21:14:57,408 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:14:57,466 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:15:52,169 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 65117 
+2023-12-03 21:15:52,170 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:15:52,206 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:16:48,442 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 66636 
+2023-12-03 21:16:48,442 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:16:48,502 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:17:18,219 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 67572 
+2023-12-03 21:17:18,219 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:17:18,390 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:17:56,913 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 68673 
+2023-12-03 21:17:56,914 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:17:56,964 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:18:18,689 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 69346 
+2023-12-03 21:18:18,690 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:18:18,745 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:18:20,897 dumbo.py [line:496] handle_messages_ld_recv INFO Sign signature failed! 
+2023-12-03 21:18:20,898 dumbo.py [line:496] handle_messages_ld_recv INFO Sign signature failed! 
+2023-12-03 21:18:20,901 dumbo.py [line:496] handle_messages_ld_recv INFO Sign signature failed! 
+2023-12-03 21:18:20,910 dumbo.py [line:496] handle_messages_ld_recv INFO Sign signature failed! 
+2023-12-03 21:18:21,271 dumbo.py [line:496] handle_messages_ld_recv INFO Sign signature failed! 
+2023-12-03 21:18:21,275 dumbo.py [line:496] handle_messages_ld_recv INFO Sign signature failed! 
+2023-12-03 21:18:21,276 dumbo.py [line:496] handle_messages_ld_recv INFO Sign signature failed! 
+2023-12-03 21:18:21,284 dumbo.py [line:496] handle_messages_ld_recv INFO Sign signature failed! 
+2023-12-03 21:19:36,741 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 71506 
+2023-12-03 21:19:36,743 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:19:36,790 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:19:39,013 dumbo.py [line:497] handle_messages_ld_recv INFO Sign signature failed! 
+2023-12-03 21:19:39,064 dumbo.py [line:497] handle_messages_ld_recv INFO Sign signature failed! 
+2023-12-03 21:19:39,109 dumbo.py [line:497] handle_messages_ld_recv INFO Sign signature failed! 
+2023-12-03 21:19:39,152 dumbo.py [line:497] handle_messages_ld_recv INFO Sign signature failed! 
+2023-12-03 21:19:39,736 dumbo.py [line:497] handle_messages_ld_recv INFO Sign signature failed! 
+2023-12-03 21:19:39,740 dumbo.py [line:497] handle_messages_ld_recv INFO Sign signature failed! 
+2023-12-03 21:19:39,766 dumbo.py [line:497] handle_messages_ld_recv INFO Sign signature failed! 
+2023-12-03 21:19:39,784 dumbo.py [line:497] handle_messages_ld_recv INFO Sign signature failed! 
+2023-12-03 21:22:00,385 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 75185 
+2023-12-03 21:22:00,385 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:22:00,599 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:24:57,162 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 79673 
+2023-12-03 21:24:57,162 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:24:57,196 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:26:01,551 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 81383 
+2023-12-03 21:26:01,551 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:26:01,597 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:29:28,036 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 86564 
+2023-12-03 21:29:28,036 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:29:28,092 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:31:06,519 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 89185 
+2023-12-03 21:31:06,520 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:31:06,565 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:33:15,503 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 92499 
+2023-12-03 21:33:15,503 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:33:15,543 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 21:39:21,488 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 101486 
+2023-12-03 21:39:21,488 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 21:39:21,530 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 23:51:05,749 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 33027 
+2023-12-03 23:51:05,749 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 23:51:05,792 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 23:51:07,990 dumbo.py [line:468] handle_messages_ld_recv INFO MerkleTree verify failed! 
+2023-12-03 23:51:08,823 dumbo.py [line:468] handle_messages_ld_recv INFO MerkleTree verify failed! 
+2023-12-03 23:52:44,298 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 35616 
+2023-12-03 23:52:44,299 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 23:52:44,343 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 23:52:46,522 dumbo.py [line:468] handle_messages_ld_recv INFO MerkleTree verify failed! 
+2023-12-03 23:57:32,443 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 42833 
+2023-12-03 23:57:32,443 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 23:57:32,496 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-03 23:58:06,867 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 43762 
+2023-12-03 23:58:06,868 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-03 23:58:06,905 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 00:07:31,527 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 58095 
+2023-12-04 00:07:31,527 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 00:07:31,565 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 00:15:04,758 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 69223 
+2023-12-04 00:15:04,758 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 00:15:04,787 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 00:17:08,752 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 72461 
+2023-12-04 00:17:08,753 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 00:17:08,791 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 00:29:40,860 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 91210 
+2023-12-04 00:29:40,860 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 00:29:40,885 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 00:31:58,559 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 94722 
+2023-12-04 00:31:58,560 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 00:31:58,609 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 00:34:54,393 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 99234 
+2023-12-04 00:34:54,394 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 00:34:54,693 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 00:36:35,156 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 101872 
+2023-12-04 00:36:35,157 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 00:36:35,255 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 00:40:42,941 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 108141 
+2023-12-04 00:40:42,942 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 00:40:42,970 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 00:44:01,457 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 113195 
+2023-12-04 00:44:01,458 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 00:44:01,498 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 00:45:25,784 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 115439 
+2023-12-04 00:45:25,784 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 00:45:25,822 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 00:46:21,736 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 116994 
+2023-12-04 00:46:21,737 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 00:46:21,820 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 00:47:46,265 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 119274 
+2023-12-04 00:47:46,266 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 00:47:46,301 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 00:49:29,511 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 121995 
+2023-12-04 00:49:29,511 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 00:49:29,539 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 00:49:56,164 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 122837 
+2023-12-04 00:49:56,165 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 00:49:56,220 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 00:50:44,900 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 124124 
+2023-12-04 00:50:44,901 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 00:50:44,964 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 00:51:17,772 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 125201 
+2023-12-04 00:51:17,773 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 00:51:17,857 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 00:52:14,615 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 126785 
+2023-12-04 00:52:14,615 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 00:52:14,723 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 00:52:44,698 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 127680 
+2023-12-04 00:52:44,699 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 00:52:44,744 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 01:19:43,758 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 38811 
+2023-12-04 01:19:43,759 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 01:19:43,802 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 01:22:08,940 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 42484 
+2023-12-04 01:22:08,940 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 01:22:08,988 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 01:22:46,698 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 43486 
+2023-12-04 01:22:46,699 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 01:22:46,754 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 01:23:35,018 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 44935 
+2023-12-04 01:23:35,018 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 01:23:35,045 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 01:24:31,316 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 46867 
+2023-12-04 01:24:31,317 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 01:24:31,370 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 01:25:10,581 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 48478 
+2023-12-04 01:25:10,581 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 01:25:10,620 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 01:26:04,956 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 50575 
+2023-12-04 01:26:04,957 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 01:26:05,002 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 01:26:34,832 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 51879 
+2023-12-04 01:26:34,832 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 01:26:34,867 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 01:28:33,577 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 56288 
+2023-12-04 01:28:33,577 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 01:28:33,637 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 03:56:39,487 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 115344 
+2023-12-04 03:56:39,489 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 03:56:39,534 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 03:57:32,334 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 117378 
+2023-12-04 03:57:32,334 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 03:57:32,385 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 04:48:05,560 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 97126 
+2023-12-04 04:48:05,561 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 04:48:05,661 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 04:48:51,841 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 98953 
+2023-12-04 04:48:51,841 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 04:48:51,877 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 04:49:19,864 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 100121 
+2023-12-04 04:49:19,865 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 04:49:19,913 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 04:51:00,724 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 103823 
+2023-12-04 04:51:00,724 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 04:51:00,893 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 04:51:40,063 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 105407 
+2023-12-04 04:51:40,064 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 04:51:40,106 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 04:53:20,308 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 109182 
+2023-12-04 04:53:20,309 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 04:53:20,371 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 04:54:21,914 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 111555 
+2023-12-04 04:54:21,914 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 04:54:21,959 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 04:55:27,619 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 114067 
+2023-12-04 04:55:27,620 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 04:55:27,661 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 04:58:13,163 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 120103 
+2023-12-04 04:58:13,163 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 04:58:13,209 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 04:58:55,767 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 121770 
+2023-12-04 04:58:55,767 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 04:58:55,809 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 05:00:22,458 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 125079 
+2023-12-04 05:00:22,458 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 05:00:22,497 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 05:01:01,388 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 126637 
+2023-12-04 05:01:01,388 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 05:01:01,420 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 05:01:56,251 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 128808 
+2023-12-04 05:01:56,251 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 05:01:56,279 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 05:34:35,519 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 72125 
+2023-12-04 05:34:35,519 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 05:34:35,552 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 05:37:21,313 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 78241 
+2023-12-04 05:37:21,313 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 05:37:21,360 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 05:40:47,463 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 85808 
+2023-12-04 05:40:47,464 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 05:40:47,507 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 05:42:44,312 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 90198 
+2023-12-04 05:42:44,312 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 05:42:44,355 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 05:43:44,098 dumbo_node.py [line:104] run INFO node 0's starts to run consensus on process id 92554 
+2023-12-04 05:43:44,099 dumbo_node.py [line:82] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 05:43:44,133 dumbo_node.py [line:99] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
+2023-12-04 06:49:10,841 dumbo_node.py [line:126] run INFO node 0's starts to run consensus on process id 106517 
+2023-12-04 06:49:10,842 dumbo_node.py [line:91] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 06:55:10,771 dumbo_node.py [line:126] run INFO node 0's starts to run consensus on process id 119292 
+2023-12-04 06:55:10,772 dumbo_node.py [line:91] prepare_bootstrap INFO node id 0 is inserting dummy payload TXs 
+2023-12-04 06:55:11,341 dumbo_node.py [line:121] prepare_bootstrap INFO node id 0 completed the loading of dummy TXs 
