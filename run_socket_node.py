@@ -100,9 +100,8 @@ if __name__ == '__main__':
     # Initialize node and join it to network
     # ================================================================================
 
-    bft = DumboBFTNode(sid, shard_id, i, B, shard_num, N, f, '/home/lyn/BDT/TXs', bft_from_server, bft_to_client, net_ready,
-                       stop, K, mute=False, debug=False,
-                       bft_running=bft_running)
+    bft = DumboBFTNode(sid, shard_id, i, B, shard_num, N, f, f'/home/lyn/BDT/TXs_file/TXs{shard_id * 4 + i}', bft_from_server, bft_to_client, net_ready, stop, K, mute=False, debug=False, bft_running=bft_running)
+    #bft = DumboBFTNode(sid, shard_id, i, B, shard_num, N, f, f'/home/lyn/BDT/TXs_file/TXs', bft_from_server,bft_to_client, net_ready, stop, K, mute=False, debug=False, bft_running=bft_running)
 
     net_server.start()
     net_client.start()

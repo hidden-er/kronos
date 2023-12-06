@@ -29,21 +29,13 @@ from multiprocessing import Lock
 lock = Lock()
 
 def read_pkl_file(file_path):
-    while True:
-        try:
-            with lock:
-                with open(file_path, 'rb') as f:
-                    data = pickle.load(f)
-            #with open(file_path, 'rb') as f:
-                #data = pickle.load(f))
-            return data
-        except:
-            continue
+    with open(file_path, 'rb') as f:
+        data = pickle.load(f)
+    return data
 
 def write_pkl_file(data, file_path):
-    with lock:
-        with open(file_path, 'wb') as f:
-            pickle.dump(data, f)
+    with open(file_path, 'wb') as f:
+        pickle.dump(data, f)
 
 
 def parse_shard_info(tx):
@@ -158,7 +150,7 @@ class Dumbo():
         self._per_round_recv = {}  # Buffer of incoming messages
         self._ld_recv = Queue()
         self.K = K
-        self.pool = []
+        self.pool = {}
 
         self.s_time = 0
         self.e_time = 0
@@ -240,6 +232,8 @@ class Dumbo():
         :param send:
         :param recv:
         """
+        tx_to_be_modified = []
+
         # Unique sid for each round
         sid = self.sid + ':' + str(r)
         pid = self.id
@@ -299,7 +293,6 @@ class Dumbo():
                             Sigma = tuple(votes.items())
                             decides.put_nowait((tx_batch, rt, Sigma))
                             break
-
         def handle_messages_ld_recv():
             ld_cnt = 0
             while True:
@@ -315,7 +308,7 @@ class Dumbo():
                     # receive LD message from other shard
                     #print("[msg]:", type(msg), msg)
                     tx_batch, proof, rt, shard_branch, positions = msg
-                    print('[LD] Node %d in shard %d receive LD message from %d' % (self.id, self.shard_id,sender))
+                    '''print('[LD] Node %d in shard %d receive LD message from %d' % (self.id, self.shard_id,sender))'''
                     #print(tx_batch)        
                     # extract the transactions output shard of which is this shard
                     txs = [tx for tx in json.loads(tx_batch) if parse_shard_info(tx)[2] == self.shard_id]
@@ -334,37 +327,28 @@ class Dumbo():
                         continue
 
                     # add these transactions to pool
-
-                    TXs = read_pkl_file(self.TXs)
-                    txs_update = []
+                    #(TODO: change cnt to list)
                     for tx in txs:
-                        if parse_shard_info(tx)[3] != 1:
-                            txs_update.append(tx)
+                        if tx in self.pool:
+                            self.pool[tx] += 1
                         else:
-                            TXs.remove(tx)
-
-                    write_pkl_file(TXs, self.TXs)
-                    self.pool.extend(txs_update)
+                            self.pool.update({tx:1})
 
                     from collections import Counter
 
                     # find transactions that can be finished in this shard
-                    def find_tx(self):
-                        tx_counter = Counter(self.pool)
-                        matching_txs = [tx for tx, count in tx_counter.items() if
-                                        count == len(parse_shard_info(tx)[0])]
-                        return matching_txs
-
-                    # matching_txs = json.dumps(find_tx(self))
-                    matching_txs = find_tx(self)
+                    matching_txs = []
+                    for tx_pool in self.pool:
+                        input_shards, _,_,_ = parse_shard_info(tx_pool)
+                        if self.pool[tx_pool] == len(input_shards):
+                            matching_txs.append(tx_pool)
 
                     # seng SIGN message to other nodes in this shard
                     sig_p = ecdsa_sign(self.sSK2, json.dumps(matching_txs))
-                    print("shard ", self.shard_id, " round ", self.epoch, " send SIGN message to other nodes")
+                    '''print("shard ", self.shard_id, " round ", self.epoch, " send SIGN message to other nodes")'''
                     send(-1, ('SIGN', '', (sig_p, matching_txs)))
                     if(ld_cnt == self.shard_num - 1):
                         break
-
         def handle_messages_sign_recv():
             signers = []
             sign_cnt = 0
@@ -373,7 +357,7 @@ class Dumbo():
                     (sender, msg) = sign_recv.get()
                     sign_cnt += 1
                     #print(type(msg),str(msg)[0:100])
-                    print('[SIGN] Node %d in shard %d receive SIGN message from %d ' % (self.id, self.shard_id, sender))
+                    '''print('[SIGN] Node %d in shard %d receive SIGN message from %d ' % (self.id, self.shard_id, sender))'''
 
                     if len(signers) < self.N - self.f:
                         sig_p, txs = msg
@@ -391,26 +375,18 @@ class Dumbo():
 
                     # receive n-f SIGN messages, verify their signatures, delete these transactions from pool and TXs, and set their outputvalid to 1
                     if len(signers) == self.N - self.f:
-                        # txs = json.loads(txs)
-                        # delete transactions in txs from pool
-                        self.pool = [tx for tx in self.pool if tx not in txs]
-                        # delete transactions in txs from TXs
                         TXs = read_pkl_file(self.TXs)
-                        TXs_update = [tx for tx in TXs if tx not in txs]
-                        # print("execute here2")
-                        # set outputvalid to 1 for transactions in txs
+                        for tx_pool in txs:
+                            input_shards, input_valids, output_shard, output_valid = parse_shard_info(tx_pool)
+                            if self.pool[tx_pool] == len(input_shards):
+                                tx_to_append = tx_pool.replace(f'Output Valid: {output_valid}', f'Output Valid: {1}')
+                                TXs.remove(tx_pool)
+                                TXs.append(tx_to_append)
+                                del self.pool[tx_pool]
 
-                        for tx in txs:
-                            # print("[tx]", tx)
-                            _, _, _, output_valid = parse_shard_info(tx)
-                            tx_raw = tx
-                            tx = tx.replace(f'Output Valid: {output_valid}', f'Output Valid: {1}')
-                            txs[txs.index(tx_raw)] = tx
-                        # add these transactions to TXs
-                        TXs_update.extend(txs)
-                        # update TXs
-                        write_pkl_file(TXs_update, self.TXs)
-                        # break
+                        '''有些轮进不来这里，也不知道为啥'''
+                        write_pkl_file(TXs, self.TXs)
+
                         #if sign_cnt >= self.N - self.f:
                         #    break
                 except Exception as e:
@@ -519,7 +495,6 @@ class Dumbo():
         ld_recv_thread = gevent.spawn(handle_messages_ld_recv)
         sign_recv_thread = gevent.spawn(handle_messages_sign_recv)
 
-
         block = set()  # TXs
         for batch in _output:
             decoded_batch = json.loads(batch.decode())
@@ -542,8 +517,23 @@ class Dumbo():
         #print(merkletree,shard_branch)
         rt = merkletree[1]
 
+        #delete txs inside shard
+        TXs = read_pkl_file(self.TXs)
+        tx_batch = tx_batch.strip('[]')
+        tx_batch = tx_batch.split('", "')
+        #print(tx_batch[0])
+        for tx in tx_batch:
+            #print(tx)
+            if tx in TXs:
+                TXs.remove(tx)
+        #print(len(TXs))
+        write_pkl_file(TXs, self.TXs)
+
+
         #print(self.shard_id,self.id,rt,shard_branch)
+
         # broadcast LD message except itself
+        # (TODO: Sent according to the shards involved)
         if self.id == 0:
                 send(-3, ('LD', '', (txs, Sigma, rt, shard_branch, positions)))
                 print("shard ", self.shard_id, " round ", self.epoch, " send LD message to other shards")
@@ -559,6 +549,7 @@ class Dumbo():
         #sign_recv_thread.kill()
         time.sleep(10)
 
+        print(f"after round {self.epoch} , {self.TXs} exists {len(read_pkl_file(self.TXs))} txs")
         bc_recv_loop_thread.kill()
 
 

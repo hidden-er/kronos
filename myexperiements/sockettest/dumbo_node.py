@@ -1,9 +1,11 @@
-from gevent import monkey; monkey.patch_all(thread=False)
+from gevent import monkey;
+
+monkey.patch_all(thread=False)
 
 import portalocker
 import re
 import random
-from typing import  Callable
+from typing import Callable
 import os
 import pickle
 from gevent import time, Greenlet
@@ -11,9 +13,13 @@ from dumbobft.core.dumbo import Dumbo
 from multiprocessing import Value as mpValue
 from coincurve import PrivateKey, PublicKey
 from ctypes import c_bool
+from crypto.ecdsa.ecdsa import ecdsa_sign, ecdsa_vrfy
+from multiprocessing import Lock
+
+lock = Lock()
+
 
 def load_key(id, N):
-
     with open(os.getcwd() + '/keys' + '/' + 'sPK.key', 'rb') as fp:
         sPK = pickle.load(fp)
 
@@ -44,11 +50,22 @@ def load_key(id, N):
 
 
 def read_pkl_file(file_path):
-    with open(file_path, 'rb') as f:
-        data = pickle.load(f)
+    while True:
+        try:
+            with lock:
+                with open(file_path, 'rb') as f:
+                    data = pickle.load(f)
+            # with open(file_path, 'rb') as f:
+            # data = pickle.load(f))
+            return data
+        except:
+            continue
 
-    return data
 
+def write_pkl_file(data, file_path):
+    with lock:
+        with open(file_path, 'wb') as f:
+            pickle.dump(data, f)
 
 
 def parse_shard_info(tx):
@@ -65,9 +82,11 @@ def parse_shard_info(tx):
     return input_shards, input_valids, output_shard, output_valid
 
 
-class DumboBFTNode (Dumbo):
+class DumboBFTNode(Dumbo):
 
-    def __init__(self, sid, shard_id, id, B, shard_num, N, f, TXs_file_path: str, bft_from_server: Callable, bft_to_client: Callable, ready: mpValue, stop: mpValue, K=3, mode='debug', mute=False, debug=False, bft_running: mpValue=mpValue(c_bool, False), tx_buffer=None):
+    def __init__(self, sid, shard_id, id, B, shard_num, N, f, TXs_file_path: str, bft_from_server: Callable,
+                 bft_to_client: Callable, ready: mpValue, stop: mpValue, K=3, mode='debug', mute=False, debug=False,
+                 bft_running: mpValue = mpValue(c_bool, False), tx_buffer=None):
         self.sPK, self.sPK1, self.sPK2s, self.ePK, self.sSK, self.sSK1, self.sSK2, self.eSK = load_key(id, N)
         self.bft_from_server = bft_from_server
         self.bft_to_client = bft_to_client
@@ -78,30 +97,97 @@ class DumboBFTNode (Dumbo):
         self.mode = mode
         self.running = bft_running
         self.TXs = TXs_file_path
-        Dumbo.__init__(self, sid, shard_id, id, max(int(B/N), 1), shard_num, N, f, self.sPK, self.sSK, self.sPK1, self.sSK1, self.sPK2s, self.sSK2, self.ePK, self.eSK, self.send, self.recv, K=K, mute=mute, debug=debug)
+        Dumbo.__init__(self, sid, shard_id, id, max(int(B / N), 1), shard_num, N, f, self.sPK, self.sSK, self.sPK1,
+                       self.sSK1, self.sPK2s, self.sSK2, self.ePK, self.eSK, self.send, self.recv, K=K, mute=mute,
+                       debug=debug)
 
     def prepare_bootstrap(self):
         self.logger.info('node id %d is inserting dummy payload TXs' % (self.id))
-        if self.mode == 'test' or 'debug': #K * max(Bfast * S, Bacs)
+        if self.mode == 'test' or 'debug':  # K * max(Bfast * S, Bacs)
+            '''
+            cl_signers = set()
+            cl_signs = dict()
+
+            def handle_CL_message():
+                nonlocal cl_signers, cl_signs
+                while True:
+                    try:
+                        (sender, (r, msg)) = self._recv()
+
+                        if r == 'CL':
+                            tx, sig = msg
+                            #print('[CL] Node %d in shard %d receive CL message from %d ' % (
+                            #self.id, self.shard_id, sender))
+                            if sender not in cl_signers:
+                                try:
+                                    assert ecdsa_vrfy(self.sPK2s[sender % self.N], tx, sig)
+                                    # print("CL signature verified!")
+                                except AssertionError:
+                                    print("CL Sign signature failed!")
+                                    continue
+
+                                cl_signers.add(sender)
+                                cl_signs[sender] = sig
+
+                                if len(cl_signers) == self.N - self.f:
+                                    print('hi')
+                                    Sigma = tuple(cl_signs.items())
+                                    input_shards, _, output_shard, _ = parse_shard_info(tx)
+                                    self._send(-3, ('CL2', (input_shards, output_shard, tx, Sigma)))
+
+                        if r == 'CL2':
+                            input_shards, output_shard, tx, Sigma = msg
+                            print('[CL2] Node %d in shard %d receive CL2 message from %d ' % (
+                            self.id, self.shard_id, sender))
+                            try:
+                                for item in Sigma:
+                                    (sender, sig_p) = item
+                                    assert ecdsa_vrfy(self.sPK2s[sender % self.N], tx, sig_p)
+                                    # print("CL2 signature verified!")
+                            except AssertionError:
+                                print("ecdsa signature failed!")
+                                continue
+
+                            if self.shard_id in input_shards:
+                                TXs = read_pkl_file(self.TXs)
+                                print(len(TXs))
+                                if tx in TXs:
+                                    TXs.remove(tx)
+                                    write_pkl_file(TXs, self.TXs)
+
+                            if self.shard_id == output_shard:
+                                if tx in self.pool:
+                                    self.pool.remove(tx)
+
+                    except:
+                        break
+
+            cl_recv_thread = Greenlet(handle_CL_message)
+            cl_recv_thread.start()
+            '''
+
             TXs = read_pkl_file(self.TXs)
             k = 0
-            txs = []
             for tx in TXs:
-                txs.append(tx)
                 input_shards, input_valids, output_shard, output_valid = parse_shard_info(tx)
-                #print(input_shards, input_valids, output_shard, output_valid)
-                if (self.shard_id in input_shards and input_valids[input_shards.index(self.shard_id)] == 0) or (self.shard_id == output_shard and output_valid == 1):
-                    #print(tx)
+                if (self.shard_id in input_shards and input_valids[input_shards.index(self.shard_id)] == 1) or (
+                        self.shard_id == output_shard and output_valid == 1):
                     Dumbo.submit_tx(self, tx)
                     k += 1
                     if k == self.B:
                         break
-            TXs = [tx for tx in TXs if tx not in txs]
-            with open(self.TXs, 'wb') as f:
-                pickle.dump(TXs, f)
+                '''
+                if self.shard_id in input_shards and input_valids[input_shards.index(self.shard_id)] == 1:
+                    sig = ecdsa_sign(self.sSK2, tx)
+                    self._send(-1, ('CL', (tx, sig)))
+                '''
 
+
+            #cl_recv_thread.join()
+            #cl_recv_thread.kill()
         else:
             pass
+
             # TODO: submit transactions through tx_buffer
         ##print(self.transaction_buffer.queue)
         self.logger.info('node id %d completed the loading of dummy TXs' % (self.id))
@@ -111,8 +197,8 @@ class DumboBFTNode (Dumbo):
         pid = os.getpid()
         self.logger.info('node %d\'s starts to run consensus on process id %d' % (self.id, pid))
 
-        #choose txs with conditions from TXs and put them into transaction_buffer
-        #TXs is a database(file) includes all txs to be processed
+        # choose txs with conditions from TXs and put them into transaction_buffer
+        # TXs is a database(file) includes all txs to be processed
         self.prepare_bootstrap()
 
         while not self.ready.value:
@@ -120,18 +206,18 @@ class DumboBFTNode (Dumbo):
 
         self.running.value = True
 
-        #process all txs in transcation_buffer; return the batch and their proof
+        # process all txs in transcation_buffer; return the batch and their proof
         self.run_bft()
         print('Node %d get message from BFT consensus' % self.id)
 
-        #print('tx_batch',tx_batch)
-        #print('proof',proof)
+        # print('tx_batch',tx_batch)
+        # print('proof',proof)
 
-        #if self.shard_sender is None:
-
+        # if self.shard_sender is None:
 
         ### VERY IMPORTANT NOT TO USE!!! otherwise nodes will NOT receive messages when running run() the second time
-        #self.stop.value = True
+        # self.stop.value = True
+
 
 def main(sid, i, B, N, f, addresses, K):
     badger = DumboBFTNode(sid, i, B, N, f, addresses, K)
@@ -139,8 +225,8 @@ def main(sid, i, B, N, f, addresses, K):
 
 
 if __name__ == '__main__':
-
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--sid', metavar='sid', required=True,
                         help='identifier of node', type=str)
