@@ -12,7 +12,7 @@ import os
 import traceback, time
 import gevent
 import numpy as np
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from enum import Enum
 from gevent import Greenlet
 from gevent.queue import Queue
@@ -24,9 +24,6 @@ from dumbobft.core.validators import prbc_validate
 from honeybadgerbft.core.honeybadger_block import honeybadger_block
 from honeybadgerbft.exceptions import UnknownTagError
 from crypto.ecdsa.ecdsa import ecdsa_sign, ecdsa_vrfy
-from multiprocessing import Lock
-
-lock = Lock()
 
 def read_pkl_file(file_path):
     with open(file_path, 'rb') as f:
@@ -150,7 +147,8 @@ class Dumbo():
         self._per_round_recv = {}  # Buffer of incoming messages
         self._ld_recv = Queue()
         self.K = K
-        self.pool = {}
+        #self.pool = {}
+        self.pool = defaultdict(list)
 
         self.s_time = 0
         self.e_time = 0
@@ -312,6 +310,11 @@ class Dumbo():
                     #print(tx_batch)        
                     # extract the transactions output shard of which is this shard
                     txs = [tx for tx in json.loads(tx_batch) if parse_shard_info(tx)[2] == self.shard_id]
+
+                    #if do not exist tx that output shard == self.shard_id
+                    if len(txs) == 0:
+                        break
+
                     # construct merkle tree of these transactions
                     val = merkleTree(txs)[1]
                     index = positions[self.shard_id]
@@ -328,7 +331,7 @@ class Dumbo():
 
                     # add these transactions to pool
                     #(TODO: change cnt to list)
-                    for tx in txs:
+                    '''for tx in txs:
                         if tx in self.pool:
                             self.pool[tx] += 1
                         else:
@@ -342,7 +345,24 @@ class Dumbo():
                         input_shards, _,_,_ = parse_shard_info(tx_pool)
                         if self.pool[tx_pool] == len(input_shards):
                             matching_txs.append(tx_pool)
+                    '''
+                    # record shard_id that sends tx
+                    for tx in txs:
+                        _, _, _, output_valid = parse_shard_info(tx)
+                        if output_valid == 0:
+                            self.pool[tx].append(sender // self.N)
 
+                    matching_txs = []
+                    for tx_pool in self.pool:
+                        #print(tx_pool, self.pool[tx_pool])
+                        input_shards, _,_,_ = parse_shard_info(tx_pool)
+                        if set(self.pool[tx_pool]) == set(input_shards):
+                            matching_txs.append(tx_pool)
+                        
+
+                    #print('matching_txs: ', matching_txs)
+                    #for tx in matching_txs
+                    #    print(tx, self.pool[tx])
                     # seng SIGN message to other nodes in this shard
                     sig_p = ecdsa_sign(self.sSK2, json.dumps(matching_txs))
                     '''print("shard ", self.shard_id, " round ", self.epoch, " send SIGN message to other nodes")'''
@@ -373,19 +393,25 @@ class Dumbo():
                                 continue
                             signers.append(sender)
 
-                    # receive n-f SIGN messages, verify their signatures, delete these transactions from pool and TXs, and set their outputvalid to 1
-                    if len(signers) == self.N - self.f:
-                        TXs = read_pkl_file(self.TXs)
-                        for tx_pool in txs:
-                            input_shards, input_valids, output_shard, output_valid = parse_shard_info(tx_pool)
-                            if self.pool[tx_pool] == len(input_shards):
-                                tx_to_append = tx_pool.replace(f'Output Valid: {output_valid}', f'Output Valid: {1}')
-                                TXs.remove(tx_pool)
-                                TXs.append(tx_to_append)
-                                del self.pool[tx_pool]
+                           # receive n-f SIGN messages, verify their signatures, delete these transactions from pool and TXs, and set their outputvalid to 1
+                            if len(signers) == self.N - self.f:
+                                TXs = read_pkl_file(self.TXs)
+                                for tx_pool in txs:
+                                    '''input_shards, input_valids, output_shard, output_valid = parse_shard_info(tx_pool)
+                                    if self.pool[tx_pool] == len(input_shards):
+                                        tx_to_append = tx_pool.replace(f'Output Valid: {output_valid}', f'Output Valid: {1}')
+                                        TXs.remove(tx_pool)
+                                        TXs.append(tx_to_append)
+                                        del self.pool[tx_pool]'''
+                                    _, _, _, output_valid = parse_shard_info(tx_pool)
+                                    tx_to_append = tx_pool.replace(f'Output Valid: {output_valid}', f'Output Valid: {1}')
+                                    TXs.remove(tx_pool)
+                                    TXs.append(tx_to_append)
+                                    del self.pool[tx_pool]
 
-                        '''有些轮进不来这里，也不知道为啥'''
-                        write_pkl_file(TXs, self.TXs)
+                                '''有些轮进不来这里，也不知道为啥'''
+                                #print(self.id, self.shard_id)
+                                write_pkl_file(TXs, self.TXs)
 
                         #if sign_cnt >= self.N - self.f:
                         #    break
@@ -500,7 +526,7 @@ class Dumbo():
             decoded_batch = json.loads(batch.decode())
             for tx in decoded_batch:
                 block.add(tx)
-
+        #print(len(list(block)))
         tx_batch = json.dumps(list(block))
         merkle_tree = group_and_build_merkle_tree(tx_batch)
         rt = merkle_tree[0][1]
@@ -519,14 +545,14 @@ class Dumbo():
 
         #delete txs inside shard
         TXs = read_pkl_file(self.TXs)
-        tx_batch = tx_batch.strip('[]')
-        tx_batch = tx_batch.split('", "')
-        #print(tx_batch[0])
+        tx_batch = json.loads(txs)
+        #print(len(tx_batch))
+        #print('node %d in shard %d before BFT has %d TXS' %(self.id, self.shard_id, len(TXs)))
         for tx in tx_batch:
             #print(tx)
             if tx in TXs:
                 TXs.remove(tx)
-        #print(len(TXs))
+        #print('node %d in shard %d after BFT has %d TXS' %(self.id, self.shard_id, len(TXs)))
         write_pkl_file(TXs, self.TXs)
 
 
