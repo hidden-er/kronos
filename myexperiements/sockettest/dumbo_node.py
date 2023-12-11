@@ -104,70 +104,8 @@ class DumboBFTNode(Dumbo):
     def prepare_bootstrap(self):
         self.logger.info('node id %d is inserting dummy payload TXs' % (self.id))
         if self.mode == 'test' or 'debug':  # K * max(Bfast * S, Bacs)
-            '''
-            cl_signers = set()
-            cl_signs = dict()
-
-            def handle_CL_message():
-                nonlocal cl_signers, cl_signs
-                while True:
-                    try:
-                        (sender, (r, msg)) = self._recv()
-
-                        if r == 'CL':
-                            tx, sig = msg
-                            #print('[CL] Node %d in shard %d receive CL message from %d ' % (
-                            #self.id, self.shard_id, sender))
-                            if sender not in cl_signers:
-                                try:
-                                    assert ecdsa_vrfy(self.sPK2s[sender % self.N], tx, sig)
-                                    # print("CL signature verified!")
-                                except AssertionError:
-                                    print("CL Sign signature failed!")
-                                    continue
-
-                                cl_signers.add(sender)
-                                cl_signs[sender] = sig
-
-                                if len(cl_signers) == self.N - self.f:
-                                    print('hi')
-                                    Sigma = tuple(cl_signs.items())
-                                    input_shards, _, output_shard, _ = parse_shard_info(tx)
-                                    self._send(-3, ('CL2', (input_shards, output_shard, tx, Sigma)))
-
-                        if r == 'CL2':
-                            input_shards, output_shard, tx, Sigma = msg
-                            print('[CL2] Node %d in shard %d receive CL2 message from %d ' % (
-                            self.id, self.shard_id, sender))
-                            try:
-                                for item in Sigma:
-                                    (sender, sig_p) = item
-                                    assert ecdsa_vrfy(self.sPK2s[sender % self.N], tx, sig_p)
-                                    # print("CL2 signature verified!")
-                            except AssertionError:
-                                print("ecdsa signature failed!")
-                                continue
-
-                            if self.shard_id in input_shards:
-                                TXs = read_pkl_file(self.TXs)
-                                print(len(TXs))
-                                if tx in TXs:
-                                    TXs.remove(tx)
-                                    write_pkl_file(TXs, self.TXs)
-
-                            if self.shard_id == output_shard:
-                                if tx in self.pool:
-                                    self.pool.remove(tx)
-
-                    except:
-                        break
-
-            cl_recv_thread = Greenlet(handle_CL_message)
-            cl_recv_thread.start()
-            '''
-
             TXs = read_pkl_file(self.TXs)
-            k = 0
+            '''k = 0
             for tx in TXs:
                 input_shards, input_valids, output_shard, output_valid = parse_shard_info(tx)
                 if (self.shard_id in input_shards and input_valids[input_shards.index(self.shard_id)] == 1) or (
@@ -175,16 +113,16 @@ class DumboBFTNode(Dumbo):
                     Dumbo.submit_tx(self, tx)
                     k += 1
                     if k == self.B:
+                        break'''
+            k = 0
+            for tx in TXs:
+                input_shards, input_valids, output_shard, output_valid = parse_shard_info(tx)
+                if self.shard_id in input_shards or (
+                        self.shard_id == output_shard and output_valid == 1):
+                    Dumbo.submit_tx(self, tx)
+                    k += 1
+                    if k == self.B:
                         break
-                '''
-                if self.shard_id in input_shards and input_valids[input_shards.index(self.shard_id)] == 1:
-                    sig = ecdsa_sign(self.sSK2, tx)
-                    self._send(-1, ('CL', (tx, sig)))
-                '''
-
-
-            #cl_recv_thread.join()
-            #cl_recv_thread.kill()
         else:
             pass
 
