@@ -69,9 +69,11 @@ class BroadcastTag(Enum):
     VOTE = 'VOTE'
     LD = 'LD'
     SIGN = 'SIGN'
+    CL_M = 'CL_M'
+    CL = 'CL'
 
 BroadcastReceiverQueues = namedtuple(
-    'BroadcastReceiverQueues', ('ACS_PRBC', 'ACS_VACS', 'TPKE', 'VOTE', 'LD', 'SIGN'))
+    'BroadcastReceiverQueues', ('ACS_PRBC', 'ACS_VACS', 'TPKE', 'VOTE', 'LD', 'SIGN', 'CL_M', 'CL'))
 
 
 def broadcast_receiver_loop(recv_func, recv_queues):
@@ -215,6 +217,7 @@ class Dumbo():
 
         #tx_batch refer to the txs in TX which operated in this epoch(BFT) in this node
         #proof is its proof
+
         self._run_round(r, tx_to_send, send_r, recv_r, self.epoch)
 
         ### VERY IMPORTANT!!! otherwise the program will be block when running  _run_round the second time
@@ -230,7 +233,6 @@ class Dumbo():
         :param send:
         :param recv:
         """
-        tx_to_be_modified = []
 
         # Unique sid for each round
         sid = self.sid + ':' + str(r)
@@ -245,6 +247,8 @@ class Dumbo():
         vote_recv = Queue()
         ld_recv = Queue()
         sign_recv = Queue()
+        clm_recv = Queue()
+        cl_recv = Queue()
 
         my_prbc_input = Queue(1)
 
@@ -261,6 +265,8 @@ class Dumbo():
             VOTE=vote_recv,
             LD=ld_recv,
             SIGN=sign_recv,
+            CL_M=clm_recv,
+            CL=cl_recv
         )
         bc_recv_loop_thread = Greenlet(broadcast_receiver_loop, recv, recv_queues)
         bc_recv_loop_thread.start()
@@ -418,6 +424,80 @@ class Dumbo():
                 except Exception as e:
                     continue
 
+        '''在运行BFT共识前 对不可用交易进行处理
+        遍历tx_to_send中的交易
+          若本分片对应有效位为0 则将其从tx_to_send中删除
+          片内广播CL_M消息 (CL_M, rid, sig)
+          收到n-f个sig后 计算聚合签名Sigma 发送给其他相关分片 (CL, rid, Sigma)   //实际操作是发送给其余所有分片 (CL, input_shards, output_shard, rid, Sigma) 分片收到CL消息后判断是否为相关分片
+        其他分片收到CL消息后 
+            验证聚合签名 
+            若是输入分片 退回操作
+            若是输出分片 pool中删除该交易'''
+        def handle_message_clm_recv():
+            clm_signers = set()
+            clm_signs = dict()
+            while True:
+                    try:
+                        (sender, msg) = clm_recv.get()
+
+                        if len(clm_signers) < self.N - self.f:
+                            tx, sig = msg
+                            #print('[CL_M] Node %d in shard %d receive CL message from %d ' % (
+                            #self.id, self.shard_id, sender))
+                            if sender not in clm_signers:
+                                try:
+                                    assert ecdsa_vrfy(self.sPK2s[sender % self.N], tx, sig)
+                                    # print("CL_M signature verified!")
+                                except AssertionError:
+                                    print("CL_M ecdsa signature failed!")
+                                    continue
+
+                                clm_signers.add(sender)
+                                clm_signs[sender] = sig
+
+                                if len(clm_signers) == self.N - self.f:
+                                    Sigma = tuple(clm_signs.items())
+                                    input_shards, _, output_shard, _ = parse_shard_info(tx)
+                                    self._send(-3, ('CL2', (input_shards, output_shard, tx, Sigma)))
+                    except:
+                        continue
+
+        def handle_message_cl_recv():
+            while True:
+                    try:
+                        (sender, msg) = cl_recv.get()
+                        input_shards, output_shard, tx, Sigma = msg
+                        #print('[CL] Node %d in shard %d receive CL2 message from %d ' % (
+                        #self.id, self.shard_id, sender))
+                        if self.shard_id in input_shards or self.shard_id == output_shard:
+                            try:
+                                for item in Sigma:
+                                    (sender, sig_p) = item
+                                    assert ecdsa_vrfy(self.sPK2s[sender % self.N], tx, sig_p)
+                                    # print("CL signature verified!")
+                            except AssertionError:
+                                print("CL ecdsa signature failed!")
+                                continue
+
+                            if self.shard_id in input_shards:
+                                '''TODO: 本分片作为输入分片 已对该交易进行了BFT共识 需要构造BACK-TX 将该输入退还至原地址''' 
+                                pass
+                            
+                            if self.shard_id == output_shard:
+                                if tx in self.pool:
+                                    del self.pool[tx]                       
+                    except:
+                        continue            
+
+        gevent.spawn(handle_message_clm_recv)
+        for tx in tx_to_send:
+            input_shards, input_valids, _, _ = parse_shard_info(tx)
+            if self.shard_id in input_shards and input_valids[input_shards.index(self.shard_id)] == 0:
+                tx_to_send.remove(tx)
+                send(-1, ('CL_M', '', (tx, ecdsa_sign(self.sSK2, tx))))
+
+        gevent.spawn(handle_message_cl_recv)
+                
         def _setup_prbc(j,epoch):
             """Setup the sub protocols RBC, BA and common coin.
             :param int j: Node index for which the setup is being done.
@@ -547,12 +627,12 @@ class Dumbo():
         TXs = read_pkl_file(self.TXs)
         tx_batch = json.loads(txs)
         #print(len(tx_batch))
-        #print('node %d in shard %d before BFT has %d TXS' %(self.id, self.shard_id, len(TXs)))
+        print('node %d in shard %d before BFT has %d TXS' %(self.id, self.shard_id, len(TXs)))
         for tx in tx_batch:
             #print(tx)
             if tx in TXs:
                 TXs.remove(tx)
-        #print('node %d in shard %d after BFT has %d TXS' %(self.id, self.shard_id, len(TXs)))
+        print('node %d in shard %d after BFT has %d TXS' %(self.id, self.shard_id, len(TXs)))
         write_pkl_file(TXs, self.TXs)
 
 
@@ -565,14 +645,6 @@ class Dumbo():
                 print("shard ", self.shard_id, " round ", self.epoch, " send LD message to other shards")
         #print("shard %d node %d gets return values" %(self.shard_id, self.id))
 
-        ### VERY IMPORTANT!!! otherwise the program will be block when running  _run_round the second time
-
-        #vote_recv_thread.join()
-        #ld_recv_thread.join()
-        #sign_recv_thread.join()
-        #vote_recv_thread.kill()
-        #ld_recv_thread.kill()
-        #sign_recv_thread.kill()
         time.sleep(10)
 
         print(f"after round {self.epoch} , {self.TXs} exists {len(read_pkl_file(self.TXs))} txs")
