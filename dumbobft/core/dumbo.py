@@ -442,7 +442,7 @@ class Dumbo():
 
                         if len(clm_signers) < self.N - self.f:
                             tx, sig = msg
-                            #print('[CL_M] Node %d in shard %d receive CL message from %d ' % (
+                            #print('[CL_M] Node %d in shard %d receive CL_M message from %d ' % (
                             #self.id, self.shard_id, sender))
                             if sender not in clm_signers:
                                 try:
@@ -458,8 +458,9 @@ class Dumbo():
                                 if len(clm_signers) == self.N - self.f:
                                     Sigma = tuple(clm_signs.items())
                                     input_shards, _, output_shard, _ = parse_shard_info(tx)
-                                    self._send(-3, ('CL2', (input_shards, output_shard, tx, Sigma)))
-                    except:
+                                    send(-3, ('CL', '', (input_shards, output_shard, tx, Sigma)))
+                    except Exception as e:
+                        print(e)
                         continue
 
         def handle_message_cl_recv():
@@ -467,7 +468,7 @@ class Dumbo():
                     try:
                         (sender, msg) = cl_recv.get()
                         input_shards, output_shard, tx, Sigma = msg
-                        #print('[CL] Node %d in shard %d receive CL2 message from %d ' % (
+                        #print('[CL] Node %d in shard %d receive CL message from %d ' % (
                         #self.id, self.shard_id, sender))
                         if self.shard_id in input_shards or self.shard_id == output_shard:
                             try:
@@ -485,18 +486,23 @@ class Dumbo():
                             
                             if self.shard_id == output_shard:
                                 if tx in self.pool:
+                                    #print("DELETE")
                                     del self.pool[tx]                       
-                    except:
+                    except Exception as e:
+                        print(e)
                         continue            
 
         gevent.spawn(handle_message_clm_recv)
+        gevent.spawn(handle_message_cl_recv)
+        tx_invalid = []
+        #print(self.shard_id, 'before ', len(tx_to_send), tx_to_send)
         for tx in tx_to_send:
             input_shards, input_valids, _, _ = parse_shard_info(tx)
             if self.shard_id in input_shards and input_valids[input_shards.index(self.shard_id)] == 0:
-                tx_to_send.remove(tx)
+                tx_invalid.append(tx)
                 send(-1, ('CL_M', '', (tx, ecdsa_sign(self.sSK2, tx))))
-
-        gevent.spawn(handle_message_cl_recv)
+        tx_to_send = [tx for tx in tx_to_send if tx not in tx_invalid]
+        #print(self.shard_id, 'after ', len(tx_to_send), tx_to_send)
                 
         def _setup_prbc(j,epoch):
             """Setup the sub protocols RBC, BA and common coin.
