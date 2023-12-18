@@ -434,17 +434,17 @@ class Dumbo():
             若是输入分片 退回操作
             若是输出分片 pool中删除该交易'''
         def handle_message_clm_recv():
-            clm_signers = set()
-            clm_signs = dict()
+            clm_signers = defaultdict(lambda: set())
+            clm_signs = defaultdict(lambda: dict())
             while True:
                     try:
                         (sender, msg) = clm_recv.get()
+                        tx, sig = msg
 
-                        if len(clm_signers) < self.N - self.f:
-                            tx, sig = msg
+                        if len(clm_signers[tx]) < self.N - self.f:
                             #print('[CL_M] Node %d in shard %d receive CL_M message from %d ' % (
                             #self.id, self.shard_id, sender))
-                            if sender not in clm_signers:
+                            if sender not in clm_signers[tx]:
                                 try:
                                     assert ecdsa_vrfy(self.sPK2s[sender % self.N], tx, sig)
                                     # print("CL_M signature verified!")
@@ -452,11 +452,11 @@ class Dumbo():
                                     print("CL_M ecdsa signature failed!")
                                     continue
 
-                                clm_signers.add(sender)
-                                clm_signs[sender] = sig
+                                clm_signers[tx].add(sender)
+                                clm_signs[tx][sender] = sig
 
-                                if len(clm_signers) == self.N - self.f:
-                                    Sigma = tuple(clm_signs.items())
+                                if len(clm_signers[tx]) == self.N - self.f:
+                                    Sigma = tuple(clm_signs[tx].items())
                                     input_shards, _, output_shard, _ = parse_shard_info(tx)
                                     send(-3, ('CL', '', (input_shards, output_shard, tx, Sigma)))
                     except Exception as e:
@@ -659,5 +659,4 @@ class Dumbo():
 
 
     # TODO： make help and callhelp threads to handle the rare cases when vacs (vaba) returns None
-
 
