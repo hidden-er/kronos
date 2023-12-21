@@ -146,7 +146,8 @@ class DumboBFTNode(Dumbo):
 
         # process all txs in transcation_buffer; return the batch and their proof
         self.run_bft()
-        print('Node %d get message from BFT consensus' % self.id)
+        #print('Node %d get message from BFT consensus' % self.id)
+
 
         # print('tx_batch',tx_batch)
         # print('proof',proof)

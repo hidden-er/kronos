@@ -185,16 +185,16 @@ class NetworkClient (Process):
         while not self.stop.value:
             try:
                 j, o = self.client_from_bft()
-                #print(f"Message dequeued: {j} from client_bft_mpq,{str(o)[0:120]}")
+                '''print(f"I'm {self.id}, I want send Message to {j}    ,{str(o)[0:120]}")'''
                 #o = self.send_queue[j].get_nowait()
                 #print('send' + str((j, o)))
                 #self.logger.info('send' + str((j, o)))
                 try:
                     #self._send(j, pickle.dumps(o))
-                    if j == -1: # -1 means broadcast
+                    if j == -1: # -1 means broadcast to nodes in the same shard
                         for i in range(self.node_num): # N should be node number
                             self.sock_queues[i + self.shard_id * self.node_num].put_nowait(o)
-                    elif j == -2: # -2 means broadcast except myself
+                    elif j == -2: # -2 means broadcast to nodes in the same shard except myself
                         for i in range(self.node_num):
                             if i != self.id:
                                 self.sock_queues[i + self.shard_id * self.node_num].put_nowait(o)
@@ -205,6 +205,9 @@ class NetworkClient (Process):
                             # If the target node is not in the same shard, send the message
                             if target_shard_id != self.shard_id:
                                 self.sock_queues[i].put_nowait(o)
+                    elif j == -4:  # -3 means broadcast to all nodes in network
+                        for i in range(self.N):
+                            self.sock_queues[i].put_nowait(o)
                     else:
                         self.sock_queues[j].put_nowait(o)
                 except Exception as e:

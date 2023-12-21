@@ -47,7 +47,7 @@ class NetworkServer (Process):
                         if data != '' and data:
                             (j, o) = (jid, pickle.loads(data))
                             # assert j in range(self.N)
-                            #print(f"Message enqueued: {j} from server_bft_mpq, {str(o)[0:120]}")
+                            '''print(f"I'm {self._address_to_id([self.ip,self.port])}, I received Message from {j}    ,{str(o)[0:120]}")'''
                             self.server_to_bft((j, o))
                             # self.logger.info('recv' + str((j, o)))
                             # print('recv' + str((j, o)))

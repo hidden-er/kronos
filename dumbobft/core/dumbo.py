@@ -71,9 +71,10 @@ class BroadcastTag(Enum):
     SIGN = 'SIGN'
     CL_M = 'CL_M'
     CL = 'CL'
+    BREAK = 'BREAK'
 
 BroadcastReceiverQueues = namedtuple(
-    'BroadcastReceiverQueues', ('ACS_PRBC', 'ACS_VACS', 'TPKE', 'VOTE', 'LD', 'SIGN', 'CL_M', 'CL'))
+    'BroadcastReceiverQueues', ('ACS_PRBC', 'ACS_VACS', 'TPKE', 'VOTE', 'LD', 'SIGN', 'CL_M', 'CL','BREAK'))
 
 
 def broadcast_receiver_loop(recv_func, recv_queues):
@@ -193,7 +194,7 @@ class Dumbo():
         self._recv_thread.start()
 
         self.s_time = time.time()
-        print("shard: ", self.shard_id, "node: ", self.id, " round: ", self.epoch, " starts Dumbo BFT consensus")
+        #print("shard: ", self.shard_id, "node: ", self.id, " round: ", self.epoch, " starts Dumbo BFT consensus")
 
         start = time.time()
 
@@ -226,6 +227,7 @@ class Dumbo():
 
         self.epoch += 1
 
+
     def _run_round(self, r, tx_to_send, send, recv, epoch):
         """Run one protocol round.
         :param int r: round id
@@ -240,6 +242,7 @@ class Dumbo():
         shard_id = self.shard_id
         N = self.N
         f = self.f
+        break_count = 0
 
         prbc_recvs = [Queue() for _ in range(N)]
         vacs_recv = Queue()
@@ -249,6 +252,7 @@ class Dumbo():
         sign_recv = Queue()
         clm_recv = Queue()
         cl_recv = Queue()
+        break_recv = Queue()
 
         my_prbc_input = Queue(1)
 
@@ -266,10 +270,20 @@ class Dumbo():
             LD=ld_recv,
             SIGN=sign_recv,
             CL_M=clm_recv,
-            CL=cl_recv
+            CL=cl_recv,
+            BREAK=break_recv
         )
         bc_recv_loop_thread = Greenlet(broadcast_receiver_loop, recv, recv_queues)
         bc_recv_loop_thread.start()
+
+        def handle_messages_break_recv():
+            nonlocal break_count
+            while break_count<self.N * self.shard_num:
+            #while break_count < self.N:
+                (sender, msg) = break_recv.get()
+                break_count+=1
+                print(f"shard {self.shard_id} node {self.id} break_count {break_count}, received from {sender}")
+
 
         def handle_messages_vote_recv():
             nonlocal voters, votes, decides
@@ -297,6 +311,7 @@ class Dumbo():
                             Sigma = tuple(votes.items())
                             decides.put_nowait((tx_batch, rt, Sigma))
                             break
+
         def handle_messages_ld_recv():
             ld_cnt = 0
             while True:
@@ -375,6 +390,7 @@ class Dumbo():
                     send(-1, ('SIGN', '', (sig_p, matching_txs)))
                     if(ld_cnt == self.shard_num - 1):
                         break
+
         def handle_messages_sign_recv():
             signers = []
             sign_cnt = 0
@@ -433,18 +449,19 @@ class Dumbo():
             验证聚合签名 
             若是输入分片 退回操作
             若是输出分片 pool中删除该交易'''
+
         def handle_message_clm_recv():
-            clm_signers = defaultdict(lambda: set())
-            clm_signs = defaultdict(lambda: dict())
+            clm_signers = set()
+            clm_signs = dict()
             while True:
                     try:
                         (sender, msg) = clm_recv.get()
-                        tx, sig = msg
 
-                        if len(clm_signers[tx]) < self.N - self.f:
+                        if len(clm_signers) < self.N - self.f:
+                            tx, sig = msg
                             #print('[CL_M] Node %d in shard %d receive CL_M message from %d ' % (
                             #self.id, self.shard_id, sender))
-                            if sender not in clm_signers[tx]:
+                            if sender not in clm_signers:
                                 try:
                                     assert ecdsa_vrfy(self.sPK2s[sender % self.N], tx, sig)
                                     # print("CL_M signature verified!")
@@ -452,17 +469,16 @@ class Dumbo():
                                     print("CL_M ecdsa signature failed!")
                                     continue
 
-                                clm_signers[tx].add(sender)
-                                clm_signs[tx][sender] = sig
+                                clm_signers.add(sender)
+                                clm_signs[sender] = sig
 
-                                if len(clm_signers[tx]) == self.N - self.f:
-                                    Sigma = tuple(clm_signs[tx].items())
+                                if len(clm_signers) == self.N - self.f:
+                                    Sigma = tuple(clm_signs.items())
                                     input_shards, _, output_shard, _ = parse_shard_info(tx)
                                     send(-3, ('CL', '', (input_shards, output_shard, tx, Sigma)))
                     except Exception as e:
                         print(e)
                         continue
-
         def handle_message_cl_recv():
             while True:
                     try:
@@ -481,7 +497,7 @@ class Dumbo():
                                 continue
 
                             if self.shard_id in input_shards:
-                                '''TODO: 本分片作为输入分片 已对该交易进行了BFT共识 需要构造BACK-TX 将该输入退还至原地址''' 
+                                #TODO: 本分片作为输入分片 已对该交易进行了BFT共识 需要构造BACK-TX 将该输入退还至原地址
                                 pass
                             
                             if self.shard_id == output_shard:
@@ -494,13 +510,17 @@ class Dumbo():
 
         gevent.spawn(handle_message_clm_recv)
         gevent.spawn(handle_message_cl_recv)
+
+
+        gevent.spawn(handle_messages_break_recv)
+
         tx_invalid = []
         #print(self.shard_id, 'before ', len(tx_to_send), tx_to_send)
         for tx in tx_to_send:
             input_shards, input_valids, _, _ = parse_shard_info(tx)
             if self.shard_id in input_shards and input_valids[input_shards.index(self.shard_id)] == 0:
                 tx_invalid.append(tx)
-                send(-1, ('CL_M', '', (tx, ecdsa_sign(self.sSK2, tx))))
+                '''send(-1, ('CL_M', '', (tx, ecdsa_sign(self.sSK2, tx))))'''
         tx_to_send = [tx for tx in tx_to_send if tx not in tx_invalid]
         #print(self.shard_id, 'after ', len(tx_to_send), tx_to_send)
                 
@@ -603,9 +623,9 @@ class Dumbo():
 
         #receive message from 'vote_recv' queue.
         #each message includes 'sender' and 'msg'
-        vote_recv_thread = gevent.spawn(handle_messages_vote_recv)
-        ld_recv_thread = gevent.spawn(handle_messages_ld_recv)
-        sign_recv_thread = gevent.spawn(handle_messages_sign_recv)
+        gevent.spawn(handle_messages_vote_recv)
+        gevent.spawn(handle_messages_ld_recv)
+        gevent.spawn(handle_messages_sign_recv)
 
         block = set()  # TXs
         for batch in _output:
@@ -649,9 +669,17 @@ class Dumbo():
         if self.id == 0:
                 send(-3, ('LD', '', (txs, Sigma, rt, shard_branch, positions)))
                 print("shard ", self.shard_id, " round ", self.epoch, " send LD message to other shards")
+
+        send(-4, ('BREAK', '', ()))
         #print("shard %d node %d gets return values" %(self.shard_id, self.id))
 
-        time.sleep(10)
+        while True:
+            if break_count == self.N * self.shard_num:
+            #if break_count == self.N:
+                break
+            time.sleep(0)
+
+        #time.sleep(10)
 
         print(f"after round {self.epoch} , {self.TXs} exists {len(read_pkl_file(self.TXs))} txs")
         bc_recv_loop_thread.kill()
@@ -659,4 +687,3 @@ class Dumbo():
 
 
     # TODO： make help and callhelp threads to handle the rare cases when vacs (vaba) returns None
-
