@@ -74,7 +74,7 @@ class BroadcastTag(Enum):
     BREAK = 'BREAK'
 
 BroadcastReceiverQueues = namedtuple(
-    'BroadcastReceiverQueues', ('ACS_PRBC', 'ACS_VACS', 'TPKE', 'VOTE', 'LD', 'SIGN', 'CL_M', 'CL','BREAK'))
+    'BroadcastReceiverQueues', ('ACS_PRBC', 'ACS_VACS', 'TPKE', 'VOTE', 'LD', 'SIGN', 'CL_M', 'CL', 'BREAK'))
 
 
 def broadcast_receiver_loop(recv_func, recv_queues):
@@ -204,9 +204,12 @@ class Dumbo():
 
         # Select B transactions (TODO: actual random selection)
         tx_to_send = []
-        #print("qsize=",self.transaction_buffer.qsize())
         for _ in range(self.B):
             tx_to_send.append(self.transaction_buffer.get_nowait())
+        
+        TXs = read_pkl_file(self.TXs)
+        TXs = [tx for tx in TXs if tx not in tx_to_send]
+        write_pkl_file(TXs, self.TXs)
 
         def _make_send(r):
             def _send(j, o):
@@ -227,7 +230,6 @@ class Dumbo():
         self._recv_thread.kill()
 
         self.epoch += 1
-
 
     def _run_round(self, r, tx_to_send, send, recv, epoch):
         """Run one protocol round.
@@ -285,7 +287,6 @@ class Dumbo():
                 break_count+=1
                 #print(f"shard {self.shard_id} node {self.id} break_count {break_count}, received from {sender}")
 
-
         def handle_messages_vote_recv():
             nonlocal voters, votes, decides
             while True:
@@ -312,7 +313,6 @@ class Dumbo():
                             Sigma = tuple(votes.items())
                             decides.put_nowait((tx_batch, rt, Sigma))
                             break
-
         def handle_messages_ld_recv():
             ld_cnt = 0
             while True:
@@ -391,7 +391,6 @@ class Dumbo():
                     send(-1, ('SIGN', '', (sig_p, matching_txs)))
                     if(ld_cnt == self.shard_num - 1):
                         break
-
         def handle_messages_sign_recv():
             signers = []
             sign_cnt = 0
@@ -402,7 +401,6 @@ class Dumbo():
                     #print(type(msg),str(msg)[0:100])
                     '''print('[SIGN] Node %d in shard %d receive SIGN message from %d ' % (self.id, self.shard_id, sender))'''
 
-                    #print(signers)
                     if len(signers) < self.N - self.f:
                         sig_p, txs = msg
                         # for each SIGN message, verify its signature
@@ -420,6 +418,7 @@ class Dumbo():
                            # receive n-f SIGN messages, verify their signatures, delete these transactions from pool and TXs, and set their outputvalid to 1
                             if len(signers) == self.N - self.f:
                                 TXs = read_pkl_file(self.TXs)
+                                #print('[FINISH] before set value=1 TXs have %d txs' %len(TXs))
                                 for tx_pool in txs:
                                     '''input_shards, input_valids, output_shard, output_valid = parse_shard_info(tx_pool)
                                     if self.pool[tx_pool] == len(input_shards):
@@ -430,30 +429,16 @@ class Dumbo():
                                     _, _, _, output_valid = parse_shard_info(tx_pool)
                                     tx_to_append = tx_pool.replace(f'Output Valid: {output_valid}', f'Output Valid: {1}')
                                     #TXs.remove(tx_pool)
-                                    print("ACTIVATE",tx_to_append)
                                     TXs.append(tx_to_append)
                                     del self.pool[tx_pool]
 
-
-                                '''有些轮进不来这里，也不知道为啥'''
-                                #print(self.id, self.shard_id)
+                                #print('[FINISH] after set value=1 TXs have %d txs' %len(TXs))
                                 write_pkl_file(TXs, self.TXs)
 
                         #if sign_cnt >= self.N - self.f:
                         #    break
                 except Exception as e:
-                    print(e)
                     continue
-
-        '''在运行BFT共识前 对不可用交易进行处理
-        遍历tx_to_send中的交易
-          若本分片对应有效位为0 则将其从tx_to_send中删除
-          片内广播CL_M消息 (CL_M, rid, sig)
-          收到n-f个sig后 计算聚合签名Sigma 发送给其他相关分片 (CL, rid, Sigma)   //实际操作是发送给其余所有分片 (CL, input_shards, output_shard, rid, Sigma) 分片收到CL消息后判断是否为相关分片
-        其他分片收到CL消息后 
-            验证聚合签名 
-            若是输入分片 退回操作
-            若是输出分片 pool中删除该交易'''
 
         def handle_message_clm_recv():
             clm_signers = set()
@@ -463,12 +448,12 @@ class Dumbo():
                         (sender, msg) = clm_recv.get()
 
                         if len(clm_signers) < self.N - self.f:
-                            tx, sig = msg
+                            txs, sig = msg
                             #print('[CL_M] Node %d in shard %d receive CL_M message from %d ' % (
                             #self.id, self.shard_id, sender))
                             if sender not in clm_signers:
                                 try:
-                                    assert ecdsa_vrfy(self.sPK2s[sender % self.N], tx, sig)
+                                    assert ecdsa_vrfy(self.sPK2s[sender % self.N], json.dumps(txs), sig)
                                     # print("CL_M signature verified!")
                                 except AssertionError:
                                     print("CL_M ecdsa signature failed!")
@@ -479,35 +464,36 @@ class Dumbo():
 
                                 if len(clm_signers) == self.N - self.f:
                                     Sigma = tuple(clm_signs.items())
-                                    input_shards, _, output_shard, _ = parse_shard_info(tx)
-                                    send(-3, ('CL', '', (input_shards, output_shard, tx, Sigma)))
+                                    send(-3, ('CL', '', (txs, Sigma)))
                     except Exception as e:
                         print(e)
                         continue
+
         def handle_message_cl_recv():
             while True:
                     try:
                         (sender, msg) = cl_recv.get()
-                        input_shards, output_shard, tx, Sigma = msg
+                        txs, Sigma = msg
                         #print('[CL] Node %d in shard %d receive CL message from %d ' % (
                         #self.id, self.shard_id, sender))
-                        if self.shard_id in input_shards or self.shard_id == output_shard:
-                            try:
-                                for item in Sigma:
-                                    (sender, sig_p) = item
-                                    assert ecdsa_vrfy(self.sPK2s[sender % self.N], tx, sig_p)
-                                    # print("CL signature verified!")
-                            except AssertionError:
-                                print("CL ecdsa signature failed!")
-                                continue
+                        try:
+                            for item in Sigma:
+                                (sender, sig_p) = item
+                                assert ecdsa_vrfy(self.sPK2s[sender % self.N], json.dumps(txs), sig_p)
+                                # print("CL signature verified!")
+                        except AssertionError:
+                            print("CL ecdsa signature failed!")
+                            continue
 
+                        for tx in txs:
+                            input_shards, _, output_shard, _ = parse_shard_info(tx)
                             if self.shard_id in input_shards:
-                                #TODO: 本分片作为输入分片 已对该交易进行了BFT共识 需要构造BACK-TX 将该输入退还至原地址
+                                '''TODO: 本分片作为输入分片 已对该交易进行了BFT共识 需要构造BACK-TX 将该输入退还至原地址''' 
                                 pass
                             
                             if self.shard_id == output_shard:
                                 if tx in self.pool:
-                                    print("DELETE",tx)
+                                    #print("DELETE")
                                     del self.pool[tx]                       
                     except Exception as e:
                         print(e)
@@ -515,37 +501,17 @@ class Dumbo():
 
         gevent.spawn(handle_message_clm_recv)
         gevent.spawn(handle_message_cl_recv)
-
-
         gevent.spawn(handle_messages_break_recv)
 
         tx_invalid = []
-        pre_tx_to_send_num = len(tx_to_send)
         #print(self.shard_id, 'before ', len(tx_to_send), tx_to_send)
         for tx in tx_to_send:
             input_shards, input_valids, _, _ = parse_shard_info(tx)
             if self.shard_id in input_shards and input_valids[input_shards.index(self.shard_id)] == 0:
                 tx_invalid.append(tx)
-                send(-1, ('CL_M', '', (tx, ecdsa_sign(self.sSK2, tx))))
+        if tx_invalid:
+            send(-1, ('CL_M', '', (tx_invalid, ecdsa_sign(self.sSK2, json.dumps(tx_invalid)))))
         tx_to_send = [tx for tx in tx_to_send if tx not in tx_invalid]
-
-        TXs = read_pkl_file(self.TXs)
-        print('node %d in shard %d before delete invalid has %d TXS' % (self.id, self.shard_id, len(TXs)))
-        for tx in tx_invalid:
-            # print(tx)
-            if tx in TXs:
-                TXs.remove(tx)
-        print('node %d in shard %d after delete invalid has %d TXS' % (self.id, self.shard_id, len(TXs)))
-        write_pkl_file(TXs, self.TXs)
-
-
-        #print(len(tx_invalid), pre_tx_to_send_num)
-        #print(tx_invalid[0:200])
-        #print(tx_to_send[0:200])
-        if len(tx_to_send) < 1:
-            #print(len(tx_invalid),pre_tx_to_send_num)
-            #print(tx_invalid)
-            raise AssertionError('null tx_to_send!!!')
         #print(self.shard_id, 'after ', len(tx_to_send), tx_to_send)
                 
         def _setup_prbc(j,epoch):
@@ -658,11 +624,7 @@ class Dumbo():
                 block.add(tx)
         #print(len(list(block)))
         tx_batch = json.dumps(list(block))
-
-        if len(json.loads(tx_batch)) < 1:
-            raise AssertionError('null tx_batch!!!')
-        else:
-            merkle_tree = group_and_build_merkle_tree(tx_batch)
+        merkle_tree = group_and_build_merkle_tree(tx_batch)
         rt = merkle_tree[0][1]
 
         try:
@@ -678,7 +640,7 @@ class Dumbo():
         rt = merkletree[1]
 
         #delete txs inside shard
-        TXs = read_pkl_file(self.TXs)
+        '''TXs = read_pkl_file(self.TXs)
         tx_batch = json.loads(txs)
         #print(len(tx_batch))
         print('node %d in shard %d before BFT has %d TXS' %(self.id, self.shard_id, len(TXs)))
@@ -687,7 +649,7 @@ class Dumbo():
             if tx in TXs:
                 TXs.remove(tx)
         print('node %d in shard %d after BFT has %d TXS' %(self.id, self.shard_id, len(TXs)))
-        write_pkl_file(TXs, self.TXs)
+        write_pkl_file(TXs, self.TXs)'''
 
 
         #print(self.shard_id,self.id,rt,shard_branch)
@@ -697,16 +659,15 @@ class Dumbo():
         if self.id == 0:
                 send(-3, ('LD', '', (txs, Sigma, rt, shard_branch, positions)))
                 print("shard ", self.shard_id, " round ", self.epoch, " send LD message to other shards")
-
-        send(-4, ('BREAK', '', ()))
         #print("shard %d node %d gets return values" %(self.shard_id, self.id))
+        
+        send(-4, ('BREAK', '', ()))
 
         while True:
             if break_count == self.N * self.shard_num:
             #if break_count == self.N:
                 break
             time.sleep(0)
-
         #time.sleep(10)
 
         print(f"after round {self.epoch} , {self.TXs} exists {len(read_pkl_file(self.TXs))} txs")
@@ -715,3 +676,4 @@ class Dumbo():
 
 
     # TODO： make help and callhelp threads to handle the rare cases when vacs (vaba) returns None
+
