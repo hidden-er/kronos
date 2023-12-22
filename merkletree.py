@@ -68,7 +68,11 @@ def mergeMerkleTrees(merkle_trees):
     output_shards = [int(output_shard) for output_shard in merkle_trees.keys()]
 
     # Build a new Merkle tree from the root nodes
-    new_tree, root_positions = merkleTree2(root_nodes, output_shards)
+    if len(root_nodes) < 1:
+        print(merkle_trees)
+        raise AssertionError('null merkle_trees')
+    else:
+        new_tree, root_positions = merkleTree2(root_nodes, output_shards)
 
     return new_tree, root_positions
 
@@ -108,7 +112,14 @@ def group_and_build_merkle_tree(tx_batch):
         merkle_tree = merkleTree(tx_list)
         merkle_trees[output_shard] = merkle_tree  # Store the Merkle tree for each output shard
     # Build the merged Merkle tree
-    merged_merkle_tree, positions = mergeMerkleTrees(merkle_trees)
+
+    if len(merkle_trees) < 1:
+        print(tx_batch_list)
+        print(grouped_tx)
+        raise AssertionError('null tx_batch_list')
+    else:
+        merged_merkle_tree, positions = mergeMerkleTrees(merkle_trees)
+
     #print(merkle_trees, positions)
 
     for output_shard in grouped_tx.keys():

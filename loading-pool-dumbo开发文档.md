@@ -121,20 +121,83 @@ class Dumbo():
 
 #### 交易处理
 
-（1）每轮`bft`开始之前，各节点分别从自己的交易记录本（`self.TXs`）中选取批次量个可处理的输入交易和输出交易，并放入缓冲区
+（1）每轮`bft`开始之前，各节点分别从自己的交易记录本（`self.TXs`）中选取批次量个**可处理**的输入交易和输出交易，并放入缓冲区；对于遍历过程中的不可使用交易，直接**删除**
 
 ​			*`dumbo_node.py---prepare_bootsrap()`*
 
+（1\*）进行bft处理之前，节点从缓冲区筛选出无效输入交易并将它们从缓冲区和**交易记录本中删除**，并在片内广播**CL_M**消息；
+
+​		*`dumbo.py---Dumbo::_run_round()`主流程中* (520s - 530s)
+
+（1\*\*）**CL_M**消息达到门限时片间广播**CL**消息，**CL**消息达到门限时，将交易从交易池（`self.pool`）~~和交易记录本~~中删去。
+
+​		`dumbo.py---Dumbo::__run_round::handle_message_clm_recv()&..._cl_recv()`
+
 （2）片内`bft`内容处理完之后，节点立刻根据对`bft`输出进行处理，具体来说就是把处理好的组内交易从自己的交易记录本里删去
 
-​			*`dumbo.py---Dumbo::_run_round()`主流程中，发送`LD`信息之前*
+​			*`dumbo.py---Dumbo::_run_round()`主流程中，发送`LD`信息之前* (660s)
 
-（3）收到其他分片的`LD`消息时，根据消息中的交易信息对交易池（`self.pool`）中的交易状态进行处理。**目前交易池逻辑是计次，计划改为记已发送列表**
+（3）收到其他分片的`LD`消息时，根据消息中的交易信息对交易池（`self.pool`）中的交易状态进行处理。~~目前交易池逻辑是计次，计划改为记已发送列表~~ 
+
+（output_valid为0的放入缓冲池，input_shard全做完的提走）
+
+**目前交易池逻辑已改为记已发送列表；**是不是还需要去个重？
 
 ​			*`dumbo.py---Dumbo::__run_round::handle_messages_ld_recv()`*
 
-（4）对于`LD`消息的片内共识`sign`消息到达门限时，根据原`LD`消息中的交易信息对交易记录本（`self.TXs`）和交易池（`self.pool`）进行处理，删除交易池中输入分片全部处理完的交易，将交易记录本中对应该交易的`Output Valid`改为1
+（4）对于`LD`消息的片内共识`sign`消息到达门限时，根据原`LD`消息中的交易信息对交易记录本（`self.TXs`）和交易池（`self.pool`）进行处理，删除交易池中输入分片全部处理完的交易，将交易记录本中对应该交易的`Output Valid`为1的版本**加回去**
 
 ​			*`dumbo.py---Dumbo::__run_round::handle_messages_sign_recv()`*
 
-​	**逻辑好像还是有点问题，应该把（3）中的操作也移到（4）中来？？**
+​	~~逻辑好像还是有点问题，应该把（3）中的操作也移到（4）中来？？~~
+
+
+
+备注：（1）中关于交易记录本的删除实际上干了很多部分的事；它只留下了**input_shards包含自己 和 output_shard为自己且output_valid为1的部分**，对于(1\*)，它删除的是**input_shards包含自己但为0的部分**，不相关；
+
+​	（4）描述的是**初始output_shard为自己、output_valid为0但后续output_valid变成1的部分**，它们的初始在（1）中就被删了，但后续在（4）中又被加了回来，不影响。
+
+​	（1\*\*）描述的是**初始output_shard为自己、output_valid为0且后续output_valid变不成1的部分**，这个比较复杂，拿个样例讲讲：
+
+```
+Input Shard: [1, 2], Input Valid: [0, 1], Output Shard: 0, Output Valid: 0
+```
+
+​	对于这个请求，节点0在（1）中将其删除；节点2正常执行，使用（3）将它放到了节点0的交易池中；节点1在（1\*）中将其删除，并使用（1\*\*）删除了节点0交易池中的它。**所以，（1\*\*）不需要对交易记录本进行操作。**
+
+
+
+
+
+
+
+#### （1）
+
+```
+Traceback (most recent call last):
+  File "src/gevent/greenlet.py", line 908, in gevent._gevent_cgreenlet.Greenlet.run
+  File "/home/lyn/BDT/myexperiements/sockettest/dumbo_node.py", line 148, in run
+    self.run_bft()
+  File "/home/lyn/BDT/dumbobft/core/dumbo.py", line 222, in run_bft
+    self._run_round(r, tx_to_send, send_r, recv_r, self.epoch)
+  File "/home/lyn/BDT/dumbobft/core/dumbo.py", line 637, in _run_round
+    merkle_tree = group_and_build_merkle_tree(tx_batch)
+  File "/home/lyn/BDT/merkletree.py", line 118, in group_and_build_merkle_tree
+    raise AssertionError('null merkle_trees')
+AssertionError: null merkle_trees
+2023-12-22T03:39:15Z <Greenlet at 0x7f25f7b36c18: <bound method DumboBFTNode.run of <myexperiements.sockettest.dumbo_node.DumboBFTNode object at 0x7f25f8b84f60>>> failed with AssertionError
+```
+
+错误产生的原因是传进Merkletree的参数为空。
+
+目前跟踪到
+
+```python
+#dumbo.py-630s 
+tx_batch = json.dumps(list(block)) #这个tx_batch还是空
+
+#dumbo.py-520s 
+tx_to_send = [tx for tx in tx_to_send if tx not in tx_invalid] #这个tx_to_send还是空
+```
+
+**问题在于不可用请求没有在交易记录本中删去导致累积；最后整个批次全是不可用交易，导致崩溃。**

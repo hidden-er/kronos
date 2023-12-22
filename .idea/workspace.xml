@@ -4,7 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bdeee525-ade5-4cd6-9a1c-41bf5e0180c7" name="Changes" comment="" />
+    <list default="true" id="bdeee525-ade5-4cd6-9a1c-41bf5e0180c7" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TXs" beforeDir="false" afterPath="$PROJECT_DIR$/TXs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dumbobft/core/dumbo.py" beforeDir="false" afterPath="$PROJECT_DIR$/dumbobft/core/dumbo.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dumbobft/core/tx_generator.py" beforeDir="false" afterPath="$PROJECT_DIR$/dumbobft/core/tx_generator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dumbobft/core/tx_generator_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/dumbobft/core/tx_generator_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/merkletree.py" beforeDir="false" afterPath="$PROJECT_DIR$/merkletree.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/myexperiements/sockettest/dumbo_node.py" beforeDir="false" afterPath="$PROJECT_DIR$/myexperiements/sockettest/dumbo_node.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run_socket_node.py" beforeDir="false" afterPath="$PROJECT_DIR$/run_socket_node.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/start.sh" beforeDir="false" afterPath="$PROJECT_DIR$/start.sh" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -65,20 +75,20 @@
       <window_info id="Commit_Guest" show_stripe_button="false" />
       <window_info id="Pull Requests" show_stripe_button="false" />
       <window_info id="Learn" show_stripe_button="false" />
-      <window_info content_ui="combo" x="757" y="322" width="1562" height="1331" id="Project" order="0" sideWeight="0.5006394" weight="0.24648437" />
+      <window_info active="true" content_ui="combo" x="757" y="322" width="1562" height="1331" id="Project" order="0" sideWeight="0.5016475" visible="true" weight="0.09898477" />
       <window_info id="Commit" order="1" weight="0.25" />
-      <window_info active="true" id="Structure" order="2" sideWeight="0.49936062" side_tool="true" visible="true" weight="0.24648437" />
+      <window_info active="true" id="Structure" order="2" sideWeight="0.49835253" side_tool="true" visible="true" weight="0.09898477" />
       <window_info anchor="bottom" id="Database Changes" show_stripe_button="false" />
       <window_info anchor="bottom" id="TypeScript" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Debug" weight="0.21586539" />
+      <window_info anchor="bottom" id="Debug" show_stripe_button="false" weight="0.46502498" />
       <window_info anchor="bottom" id="Python Packages" show_stripe_button="false" />
       <window_info anchor="bottom" id="TODO" show_stripe_button="false" />
       <window_info anchor="bottom" id="File Transfer" show_stripe_button="false" />
       <window_info anchor="bottom" id="Python Console" weight="0.33012134" />
-      <window_info active="true" anchor="bottom" id="Run" visible="true" weight="0.38872936" />
+      <window_info active="true" anchor="bottom" id="Run" visible="true" weight="0.5171306" />
       <window_info anchor="bottom" id="Find" weight="0.33012134" />
       <window_info anchor="bottom" id="Version Control" order="0" weight="0.34355557" />
-      <window_info anchor="bottom" id="Problems View" order="1" weight="0.33012134" />
+      <window_info anchor="bottom" id="Problems View" order="1" weight="0.46502498" />
       <window_info anchor="bottom" id="Terminal" order="2" weight="0.33012134" />
       <window_info anchor="bottom" id="Services" order="3" />
       <window_info anchor="right" id="Endpoints" show_stripe_button="false" />
@@ -131,7 +141,7 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="run_socket_node.py" />
-      <option name="PARAMETERS" value="--sid sidA --id 0 --shard_id 0 --shard_num 3 --N 4 --f 1 --B 1000 --K 1" />
+      <option name="PARAMETERS" value="--sid sidA --id 0 --shard_id 0 --shard_num 3 --N 4 --f 1 --B 2000 --K 1" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -230,7 +240,8 @@
       <workItem from="1701850421837" duration="9425000" />
       <workItem from="1702886782415" duration="15148000" />
       <workItem from="1703148811967" duration="5766000" />
-      <workItem from="1703157542033" duration="503000" />
+      <workItem from="1703157542033" duration="3186000" />
+      <workItem from="1703160945746" duration="14714000" />
     </task>
     <servers />
   </component>
@@ -260,7 +271,7 @@
           <condition expression="self.epoch == 1" language="Python" />
           <dependency id="0" />
           <url>file://$PROJECT_DIR$/dumbobft/core/dumbo.py</url>
-          <line>462</line>
+          <line>484</line>
           <option name="timeStamp" value="52" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -286,8 +297,8 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/BDT$merkletree.coverage" NAME="merkletree Coverage Results" MODIFIED="1701315415801" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/bdtbft/core" />
-    <SUITE FILE_PATH="coverage/BDT$tx_generator_test.coverage" NAME="tx_generator_test Coverage Results" MODIFIED="1701857411985" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/dumbobft/core" />
-    <SUITE FILE_PATH="coverage/BDT$node.coverage" NAME="node Coverage Results" MODIFIED="1703152810529" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/BDT$tx_generator_test.coverage" NAME="tx_generator_test Coverage Results" MODIFIED="1703226718905" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/dumbobft/core" />
+    <SUITE FILE_PATH="coverage/BDT$node.coverage" NAME="node Coverage Results" MODIFIED="1703239386631" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/BDT$tx_generator.coverage" NAME="tx_generator Coverage Results" MODIFIED="1701339286850" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

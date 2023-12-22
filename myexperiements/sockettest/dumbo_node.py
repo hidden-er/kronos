@@ -105,6 +105,7 @@ class DumboBFTNode(Dumbo):
         self.logger.info('node id %d is inserting dummy payload TXs' % (self.id))
         if self.mode == 'test' or 'debug':  # K * max(Bfast * S, Bacs)
             TXs = read_pkl_file(self.TXs)
+            print('node %d in shard %d before extract batch has %d TXS' % (self.id, self.shard_id, len(TXs)))
             '''k = 0
             for tx in TXs:
                 input_shards, input_valids, output_shard, output_valid = parse_shard_info(tx)
@@ -123,11 +124,19 @@ class DumboBFTNode(Dumbo):
                     k += 1
                     if k == self.B:
                         break
+                else:
+                    TXs.remove(tx)
+
+            print('node %d in shard %d after extract batch has %d TXS' % (self.id, self.shard_id, len(TXs)))
+            write_pkl_file(TXs,self.TXs)
+            #print(len(TXs))
+            #print("k=",k)
         else:
             pass
 
             # TODO: submit transactions through tx_buffer
         ##print(self.transaction_buffer.queue)
+        #print(self.transaction_buffer.qsize())
         self.logger.info('node id %d completed the loading of dummy TXs' % (self.id))
 
     def run(self):

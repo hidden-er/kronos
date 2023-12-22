@@ -204,6 +204,7 @@ class Dumbo():
 
         # Select B transactions (TODO: actual random selection)
         tx_to_send = []
+        #print("qsize=",self.transaction_buffer.qsize())
         for _ in range(self.B):
             tx_to_send.append(self.transaction_buffer.get_nowait())
 
@@ -282,7 +283,7 @@ class Dumbo():
             #while break_count < self.N:
                 (sender, msg) = break_recv.get()
                 break_count+=1
-                print(f"shard {self.shard_id} node {self.id} break_count {break_count}, received from {sender}")
+                #print(f"shard {self.shard_id} node {self.id} break_count {break_count}, received from {sender}")
 
 
         def handle_messages_vote_recv():
@@ -401,6 +402,7 @@ class Dumbo():
                     #print(type(msg),str(msg)[0:100])
                     '''print('[SIGN] Node %d in shard %d receive SIGN message from %d ' % (self.id, self.shard_id, sender))'''
 
+                    #print(signers)
                     if len(signers) < self.N - self.f:
                         sig_p, txs = msg
                         # for each SIGN message, verify its signature
@@ -427,9 +429,11 @@ class Dumbo():
                                         del self.pool[tx_pool]'''
                                     _, _, _, output_valid = parse_shard_info(tx_pool)
                                     tx_to_append = tx_pool.replace(f'Output Valid: {output_valid}', f'Output Valid: {1}')
-                                    TXs.remove(tx_pool)
+                                    #TXs.remove(tx_pool)
+                                    print("ACTIVATE",tx_to_append)
                                     TXs.append(tx_to_append)
                                     del self.pool[tx_pool]
+
 
                                 '''有些轮进不来这里，也不知道为啥'''
                                 #print(self.id, self.shard_id)
@@ -438,6 +442,7 @@ class Dumbo():
                         #if sign_cnt >= self.N - self.f:
                         #    break
                 except Exception as e:
+                    print(e)
                     continue
 
         '''在运行BFT共识前 对不可用交易进行处理
@@ -502,7 +507,7 @@ class Dumbo():
                             
                             if self.shard_id == output_shard:
                                 if tx in self.pool:
-                                    #print("DELETE")
+                                    print("DELETE",tx)
                                     del self.pool[tx]                       
                     except Exception as e:
                         print(e)
@@ -515,13 +520,32 @@ class Dumbo():
         gevent.spawn(handle_messages_break_recv)
 
         tx_invalid = []
+        pre_tx_to_send_num = len(tx_to_send)
         #print(self.shard_id, 'before ', len(tx_to_send), tx_to_send)
         for tx in tx_to_send:
             input_shards, input_valids, _, _ = parse_shard_info(tx)
             if self.shard_id in input_shards and input_valids[input_shards.index(self.shard_id)] == 0:
                 tx_invalid.append(tx)
-                '''send(-1, ('CL_M', '', (tx, ecdsa_sign(self.sSK2, tx))))'''
+                send(-1, ('CL_M', '', (tx, ecdsa_sign(self.sSK2, tx))))
         tx_to_send = [tx for tx in tx_to_send if tx not in tx_invalid]
+
+        TXs = read_pkl_file(self.TXs)
+        print('node %d in shard %d before delete invalid has %d TXS' % (self.id, self.shard_id, len(TXs)))
+        for tx in tx_invalid:
+            # print(tx)
+            if tx in TXs:
+                TXs.remove(tx)
+        print('node %d in shard %d after delete invalid has %d TXS' % (self.id, self.shard_id, len(TXs)))
+        write_pkl_file(TXs, self.TXs)
+
+
+        #print(len(tx_invalid), pre_tx_to_send_num)
+        #print(tx_invalid[0:200])
+        #print(tx_to_send[0:200])
+        if len(tx_to_send) < 1:
+            #print(len(tx_invalid),pre_tx_to_send_num)
+            #print(tx_invalid)
+            raise AssertionError('null tx_to_send!!!')
         #print(self.shard_id, 'after ', len(tx_to_send), tx_to_send)
                 
         def _setup_prbc(j,epoch):
@@ -634,7 +658,11 @@ class Dumbo():
                 block.add(tx)
         #print(len(list(block)))
         tx_batch = json.dumps(list(block))
-        merkle_tree = group_and_build_merkle_tree(tx_batch)
+
+        if len(json.loads(tx_batch)) < 1:
+            raise AssertionError('null tx_batch!!!')
+        else:
+            merkle_tree = group_and_build_merkle_tree(tx_batch)
         rt = merkle_tree[0][1]
 
         try:

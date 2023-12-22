@@ -3,10 +3,12 @@ import pickle
 def tx_generator(size=250, shard_num=4, chars=string.ascii_uppercase + string.digits):
     random.seed(time.time())
     # 90% probability: input and output shards are the same
-    if random.random() < 0.1:
+    if random.random() < 0.9:
         common_shard = random.randint(0, shard_num - 1)
         input_valid = random.choice([0, 1])
-        shard_info = f", Input Shard: {str([common_shard])}, Input Valid: {str([input_valid])}, Output Shard: {common_shard}, Output Valid: {0}"
+        #shard_info = f", Input Shard: {str([common_shard])}, Input Valid: {str([input_valid])}, Output Shard: {common_shard}, Output Valid: {1}"
+        shard_info = f", Input Shard: {str([common_shard])}, Input Valid: [1], Output Shard: {common_shard}, Output Valid: {1}"
+
     # 10% probability: input and output shards are different
     else:
         input_shard_num = random.randint(1, shard_num-1)

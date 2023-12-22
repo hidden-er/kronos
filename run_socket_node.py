@@ -115,12 +115,13 @@ if __name__ == '__main__':
     print("network ready!!!")
 
     start = time.time()
-    for j in range(5):
+    for j in range(10):
         print(f"shard_id {shard_id}, node {i} BFT round {j}")
         bft_thread = Greenlet(bft.run)
         bft_thread.start()
         bft_thread.join()
 
+    time.sleep(2)
     with stop.get_lock():
         stop.value = True
         print("shard_id ", shard_id, "node ",i," stop; total time:",time.time()-start)

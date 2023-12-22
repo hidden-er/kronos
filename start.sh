@@ -14,7 +14,7 @@ shard_id=0
 while [ "$shard_id" -lt $1 ]; do
     node_id=0
     while [ "$node_id" -lt $(( $2 - 0 )) ]; do
-        if [ "$shard_id" -eq 100 ] && [ "$node_id" -eq 0 ]; then
+        if [ "$shard_id" -eq 0 ] && [ "$node_id" -eq 0 ]; then
             echo "Skipping node $node_id in shard $shard_id..."
         else
             echo "start node $node_id in shard $shard_id..."
