@@ -85,7 +85,7 @@ def parse_shard_info(tx):
 class DumboBFTNode(Dumbo):
 
     def __init__(self, sid, shard_id, id, B, shard_num, N, f, TXs_file_path: str, bft_from_server: Callable,
-                 bft_to_client: Callable, ready: mpValue, stop: mpValue, K=3, mode='debug', mute=False, debug=False,
+                 bft_to_client: Callable, ready: mpValue, stop: mpValue, logg, K=3, mode='debug', mute=False, debug=False,
                  bft_running: mpValue = mpValue(c_bool, False), tx_buffer=None):
         self.sPK, self.sPK1, self.sPK2s, self.ePK, self.sSK, self.sSK1, self.sSK2, self.eSK = load_key(id, N)
         self.bft_from_server = bft_from_server
@@ -98,14 +98,16 @@ class DumboBFTNode(Dumbo):
         self.running = bft_running
         self.TXs = TXs_file_path
         Dumbo.__init__(self, sid, shard_id, id, max(int(B / N), 1), shard_num, N, f, self.sPK, self.sSK, self.sPK1,
-                       self.sSK1, self.sPK2s, self.sSK2, self.ePK, self.eSK, self.send, self.recv, K=K, mute=mute,
+                       self.sSK1, self.sPK2s, self.sSK2, self.ePK, self.eSK, self.send, self.recv, logg,K=K, mute=mute,
                        debug=debug)
 
     def prepare_bootstrap(self):
-        self.logger.info('node id %d is inserting dummy payload TXs' % (self.id))
+        #self.logger.info('node id %d is inserting dummy payload TXs' % (self.id))
         if self.mode == 'test' or 'debug':  # K * max(Bfast * S, Bacs)
             TXs = read_pkl_file(self.TXs)
+            self.logger.info('node %d in shard %d before extract batch has %d TXS' % (self.id, self.shard_id, len(TXs)))
             print('node %d in shard %d before extract batch has %d TXS' % (self.id, self.shard_id, len(TXs)))
+
             '''k = 0
             for tx in TXs:
                 input_shards, input_valids, output_shard, output_valid = parse_shard_info(tx)
@@ -127,7 +129,9 @@ class DumboBFTNode(Dumbo):
                 else:
                     TXs.remove(tx)
 
+            self.logger.info('node %d in shard %d after extract batch has %d TXS' % (self.id, self.shard_id, len(TXs)))
             print('node %d in shard %d after extract batch has %d TXS' % (self.id, self.shard_id, len(TXs)))
+
             write_pkl_file(TXs,self.TXs)
             #print(len(TXs))
             #print("k=",k)
@@ -137,12 +141,12 @@ class DumboBFTNode(Dumbo):
             # TODO: submit transactions through tx_buffer
         ##print(self.transaction_buffer.queue)
         #print(self.transaction_buffer.qsize())
-        self.logger.info('node id %d completed the loading of dummy TXs' % (self.id))
+        #self.logger.info('node id %d completed the loading of dummy TXs' % (self.id))
 
     def run(self):
 
         pid = os.getpid()
-        self.logger.info('node %d\'s starts to run consensus on process id %d' % (self.id, pid))
+        #self.logger.info('node %d\'s starts to run consensus on process id %d' % (self.id, pid))
 
         # choose txs with conditions from TXs and put them into transaction_buffer
         # TXs is a database(file) includes all txs to be processed
@@ -205,6 +209,6 @@ if __name__ == '__main__':
     host = "127.0.0.1"
     port_base = int(rnd.random() * 5 + 1) * 10000
     addresses = [(host, port_base + 200 * i) for i in range(N)]
-    print(addresses)
+    #print(addresses)
 
     main(sid, i, B, N, f, addresses, K)

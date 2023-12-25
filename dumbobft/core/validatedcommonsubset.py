@@ -129,7 +129,7 @@ def validatedcommonsubset(sid, pid, shard_id, N, f, PK, SK, PK1, SK1, PK2s, SK2,
         v = input()
         if logger != None:
             logger.info("VACS gets input")
-        print("node %d gets VACS input" % pid)
+        #print("node %d gets VACS input" % pid)
         #assert predicate(pid, v)
         send(-1, ('VACS_VAL', v))
 
@@ -154,6 +154,6 @@ def validatedcommonsubset(sid, pid, shard_id, N, f, PK, SK, PK1, SK1, PK2s, SK2,
 
     if logger != None:
         logger.info("VACS completes")
-    print("node %d output in VACS" % pid)
+    #print("node %d output in VACS" % pid)
 
     vaba.kill()

@@ -37,7 +37,7 @@ def shared_coin(sid, pid, shard_id, N, f, PK, SK, broadcast, receive, single_bit
     assert PK.k == f+1
     assert PK.l == N    # noqa: E741
     received = defaultdict(dict)
-    outputQueue = defaultdict(lambda: Queue(1))
+    outputQueue = defaultdict(lambda: Queue())
 
     def _recv():
         while True:     # main receive loop

@@ -48,20 +48,6 @@ def parse_shard_info(tx):
 
     return input_shards, input_valids, output_shard, output_valid
 
-
-def set_consensus_log(id: int):
-    logger = logging.getLogger("consensus-node-" + str(id))
-    logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(
-        '%(asctime)s %(filename)s [line:%(lineno)d] %(funcName)s %(levelname)s %(message)s ')
-    if 'log' not in os.listdir(os.getcwd()):
-        os.mkdir(os.getcwd() + '/log')
-    full_path = os.path.realpath(os.getcwd()) + '/log/' + "consensus-node-" + str(id) + ".log"
-    file_handler = logging.FileHandler(full_path)
-    file_handler.setFormatter(formatter)  # 可以通过setFormatter指定输出格式
-    logger.addHandler(file_handler)
-    return logger
-
 class BroadcastTag(Enum):
     ACS_PRBC = 'ACS_PRBC'
     ACS_VACS = 'ACS_VACS'
@@ -125,7 +111,7 @@ class Dumbo():
     :param K: a test parameter to specify break out after K rounds
     """
 
-    def __init__(self, sid, shard_id, pid, B, shard_num, N, f, sPK, sSK, sPK1, sSK1, sPK2s, sSK2, ePK, eSK, send, recv, K=3,
+    def __init__(self, sid, shard_id, pid, B, shard_num, N, f, sPK, sSK, sPK1, sSK1, sPK2s, sSK2, ePK, eSK, send, recv, logg, K=3,
                  mute=False, debug=False, ):
         self.sid = sid
         self.id = pid
@@ -144,7 +130,7 @@ class Dumbo():
         self.eSK = eSK
         self._send = send
         self._recv = recv
-        self.logger = set_consensus_log(pid + shard_id * N)
+        self.logger = logg
         self.round = 0  # Current block number
         self.transaction_buffer = Queue()
         self._per_round_recv = {}  # Buffer of incoming messages
@@ -196,8 +182,6 @@ class Dumbo():
         self.s_time = time.time()
         #print("shard: ", self.shard_id, "node: ", self.id, " round: ", self.epoch, " starts Dumbo BFT consensus")
 
-        start = time.time()
-
         r = self.round
         if r not in self._per_round_recv:
             self._per_round_recv[r] = Queue()
@@ -230,6 +214,12 @@ class Dumbo():
         self._recv_thread.kill()
 
         self.epoch += 1
+
+        if self.logger != None:
+            self.e_time = time.time()
+            self.logger.info("node %d breaks in %f seconds with total delivered Txs %d" % (self.id, self.e_time-self.s_time, self.txcnt))
+        else:
+            print("node %d breaks" % self.id)
 
     def _run_round(self, r, tx_to_send, send, recv, epoch):
         """Run one protocol round.
@@ -622,7 +612,22 @@ class Dumbo():
             decoded_batch = json.loads(batch.decode())
             for tx in decoded_batch:
                 block.add(tx)
+        '''
+        这里我们似乎把所有经过共识处理完的交易都放入block了，但实际上那些跨片交易，不是最后一次处理，不能写入block吧
+        所以，在logger的TPS算法中，可用的跨片交易被计算了 len(input_shards)+1 次transcation
+        不过其实无所谓，反正也不用这个TPS值，因为总TPS包含很多没进共识就被删掉的交易，还是会大很多。
+        '''
+
+
         #print(len(list(block)))
+        if self.logger != None:
+            tx_cnt = str(list(block)).count("Dummy TX")
+            self.txcnt += tx_cnt
+            self.logger.info('Node %d Delivers ACS Block in Round %d with having %d TXs' % (self.id, r, tx_cnt))
+            end = time.time()
+            self.logger.info('ACS Block Delay at Node %d: ' % self.id + str(end - self.s_time))
+            self.logger.info('Current Block\'s TPS at Node %d: ' % self.id + str(tx_cnt / (end - self.s_time)))
+
         tx_batch = json.dumps(list(block))
         merkle_tree = group_and_build_merkle_tree(tx_batch)
         rt = merkle_tree[0][1]
@@ -658,7 +663,7 @@ class Dumbo():
         # (TODO: Sent according to the shards involved)
         if self.id == 0:
                 send(-3, ('LD', '', (txs, Sigma, rt, shard_branch, positions)))
-                print("shard ", self.shard_id, " round ", self.epoch, " send LD message to other shards")
+                #print("shard ", self.shard_id, " round ", self.epoch, " send LD message to other shards")
         #print("shard %d node %d gets return values" %(self.shard_id, self.id))
         
         send(-4, ('BREAK', '', ()))
@@ -670,8 +675,10 @@ class Dumbo():
             time.sleep(0)
         #time.sleep(10)
 
+        self.logger.info(f"after round {self.epoch} , {self.TXs} exists {len(read_pkl_file(self.TXs))} txs")
         print(f"after round {self.epoch} , {self.TXs} exists {len(read_pkl_file(self.TXs))} txs")
         bc_recv_loop_thread.kill()
+        return list(block)
 
 
 
