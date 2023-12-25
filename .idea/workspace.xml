@@ -8,9 +8,11 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TXs" beforeDir="false" afterPath="$PROJECT_DIR$/TXs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dumbobft/core/dumbo.py" beforeDir="false" afterPath="$PROJECT_DIR$/dumbobft/core/dumbo.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dumbobft/core/provablereliablebroadcast.py" beforeDir="false" afterPath="$PROJECT_DIR$/dumbobft/core/provablereliablebroadcast.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dumbobft/core/tx_generator.py" beforeDir="false" afterPath="$PROJECT_DIR$/dumbobft/core/tx_generator.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dumbobft/core/tx_generator_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/dumbobft/core/tx_generator_test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/merkletree.py" beforeDir="false" afterPath="$PROJECT_DIR$/merkletree.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dumbobft/core/validatedcommonsubset.py" beforeDir="false" afterPath="$PROJECT_DIR$/dumbobft/core/validatedcommonsubset.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/honeybadgerbft/core/commoncoin.py" beforeDir="false" afterPath="$PROJECT_DIR$/honeybadgerbft/core/commoncoin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/honeybadgerbft/core/honeybadger_block.py" beforeDir="false" afterPath="$PROJECT_DIR$/honeybadgerbft/core/honeybadger_block.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/myexperiements/sockettest/dumbo_node.py" beforeDir="false" afterPath="$PROJECT_DIR$/myexperiements/sockettest/dumbo_node.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/run_socket_node.py" beforeDir="false" afterPath="$PROJECT_DIR$/run_socket_node.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/start.sh" beforeDir="false" afterPath="$PROJECT_DIR$/start.sh" afterDir="false" />
@@ -75,9 +77,9 @@
       <window_info id="Commit_Guest" show_stripe_button="false" />
       <window_info id="Pull Requests" show_stripe_button="false" />
       <window_info id="Learn" show_stripe_button="false" />
-      <window_info active="true" content_ui="combo" x="757" y="322" width="1562" height="1331" id="Project" order="0" sideWeight="0.5016475" visible="true" weight="0.09898477" />
+      <window_info active="true" content_ui="combo" x="757" y="322" width="1562" height="1331" id="Project" order="0" sideWeight="0.72021115" visible="true" weight="0.19820172" />
       <window_info id="Commit" order="1" weight="0.25" />
-      <window_info active="true" id="Structure" order="2" sideWeight="0.49835253" side_tool="true" visible="true" weight="0.09898477" />
+      <window_info active="true" id="Structure" order="2" sideWeight="0.27978885" side_tool="true" visible="true" weight="0.19820172" />
       <window_info anchor="bottom" id="Database Changes" show_stripe_button="false" />
       <window_info anchor="bottom" id="TypeScript" show_stripe_button="false" />
       <window_info anchor="bottom" id="Debug" show_stripe_button="false" weight="0.46502498" />
@@ -85,7 +87,7 @@
       <window_info anchor="bottom" id="TODO" show_stripe_button="false" />
       <window_info anchor="bottom" id="File Transfer" show_stripe_button="false" />
       <window_info anchor="bottom" id="Python Console" weight="0.33012134" />
-      <window_info active="true" anchor="bottom" id="Run" visible="true" weight="0.5171306" />
+      <window_info active="true" anchor="bottom" id="Run" visible="true" weight="0.47678572" />
       <window_info anchor="bottom" id="Find" weight="0.33012134" />
       <window_info anchor="bottom" id="Version Control" order="0" weight="0.34355557" />
       <window_info anchor="bottom" id="Problems View" order="1" weight="0.46502498" />
@@ -241,7 +243,8 @@
       <workItem from="1702886782415" duration="15148000" />
       <workItem from="1703148811967" duration="5766000" />
       <workItem from="1703157542033" duration="3186000" />
-      <workItem from="1703160945746" duration="14714000" />
+      <workItem from="1703160945746" duration="15553000" />
+      <workItem from="1703473315475" duration="10643000" />
     </task>
     <servers />
   </component>
@@ -271,7 +274,7 @@
           <condition expression="self.epoch == 1" language="Python" />
           <dependency id="0" />
           <url>file://$PROJECT_DIR$/dumbobft/core/dumbo.py</url>
-          <line>484</line>
+          <line>474</line>
           <option name="timeStamp" value="52" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -284,6 +287,11 @@
           <url>file://$PROJECT_DIR$/network/socket_client.py</url>
           <line>191</line>
           <option name="timeStamp" value="69" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/dumbobft/core/dumbo.py</url>
+          <line>181</line>
+          <option name="timeStamp" value="70" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -298,7 +306,7 @@
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/BDT$merkletree.coverage" NAME="merkletree Coverage Results" MODIFIED="1701315415801" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/bdtbft/core" />
     <SUITE FILE_PATH="coverage/BDT$tx_generator_test.coverage" NAME="tx_generator_test Coverage Results" MODIFIED="1703226718905" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/dumbobft/core" />
-    <SUITE FILE_PATH="coverage/BDT$node.coverage" NAME="node Coverage Results" MODIFIED="1703239386631" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/BDT$node.coverage" NAME="node Coverage Results" MODIFIED="1703490456719" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/BDT$tx_generator.coverage" NAME="tx_generator Coverage Results" MODIFIED="1701339286850" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

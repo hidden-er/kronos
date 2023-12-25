@@ -70,7 +70,7 @@ def honeybadger_block(pid, N, f, PK, SK, propose, acs_put_in, acs_get_out, tpke_
     tkey = PK.encrypt(key)
 
 
-    print("node %d starts to make block" % pid)
+    #print("node %d starts to make block" % pid)
 
     import pickle
     to_acs = pickle.dumps((serialize_UVW(*tkey), ciphertext))
@@ -132,7 +132,7 @@ def honeybadger_block(pid, N, f, PK, SK, propose, acs_put_in, acs_get_out, tpke_
         key = PK.combine_shares(*tkey, svec)
         plain = tpke.decrypt(key, ciph)
         decryptions.append(plain)
-    print('Node %d make block Done!' % pid)
+    #print('Node %d make block Done!' % pid)
 
     return tuple(decryptions)
 

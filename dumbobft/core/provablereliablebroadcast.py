@@ -199,5 +199,5 @@ def provablereliablebroadcast(sid, pid, shard_id, N, f,  PK2s, SK2, leader, inpu
                 end = time.time()
                # if logger != None:
                #     logger.info("ABA %d completes in %f seconds" % (leader, end-start))
-                print("RBC %d completes in %f seconds" % (leader, end-start))
+               # print("RBC %d completes in %f seconds" % (leader, end-start))
                 return value, proof
