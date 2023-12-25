@@ -50,7 +50,7 @@ def shared_coin(sid, pid, shard_id, N, f, PK, SK, broadcast, receive, single_bit
             assert i % N in range(N)
             # assert r >= 0  ### Comment this line since round r can be a string
             if i in received[r]:
-                print("redundant coin sig received", (sid, pid, i % N, r))
+                #print("redundant coin sig received", (sid, pid, i % N, r))
                 continue
 
             h = PK.hash_message(str((sid, r)))

@@ -10,13 +10,13 @@ from honeybadgerbft.exceptions import RedundantMessageError, AbandonedNodeError
 def handle_conf_messages(*, N, sender, message, conf_values, pid, bv_signal):
     _, r, v = message
     assert v in ((0,), (1,), (0, 1))
-    if sender % N in conf_values[r][v]:
+    #if sender % N in conf_values[r][v]:
         # FIXME: Raise for now to simplify things & be consistent
         # with how other TAGs are handled. Will replace the raise
         # with a continue statement as part of
         # https://github.com/initc3/HoneyBadgerBFT-Python/issues/10
-        raise RedundantMessageError(
-            'Redundant CONF received {}'.format(message))
+    #    raise RedundantMessageError(
+    #        'Redundant CONF received {}'.format(message))
 
     conf_values[r][v].add(sender % N)
 
