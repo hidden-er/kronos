@@ -276,7 +276,6 @@ class Dumbo():
                 (sender, msg) = break_recv.get()
                 break_count+=1
                 #print(f"shard {self.shard_id} node {self.id} break_count {break_count}, received from {sender}")
-
         def handle_messages_vote_recv():
             nonlocal voters, votes, decides
             while True:
@@ -429,7 +428,6 @@ class Dumbo():
                         #    break
                 except Exception as e:
                     continue
-
         def handle_message_clm_recv():
             clm_signers = set()
             clm_signs = dict()
@@ -458,7 +456,6 @@ class Dumbo():
                     except Exception as e:
                         print(e)
                         continue
-
         def handle_message_cl_recv():
             while True:
                     try:
@@ -589,10 +586,21 @@ class Dumbo():
                                    vacs_output.get)
         dumboacs_thread.start()
         #print("shard: ", self.shard_id, "node: ", self.id, " round: ", self.epoch, " ready to honeybadger")
-        _output = honeybadger_block(pid, self.N, self.f, self.ePK, self.eSK,
-                                    propose=json.dumps(tx_to_send),
-                                    acs_put_in=my_prbc_input.put_nowait, acs_get_out=dumboacs_thread.get,
-                                    tpke_bcast=tpke_bcast, tpke_recv=tpke_recv.get)
+
+        my_prbc_input.put_nowait(json.dumps(tx_to_send))
+        _output = dumboacs_thread.get()
+
+        output = []
+        for ii in _output:
+            if ii != None:
+                output.append(ii)
+        output = tuple(output)
+        #_output = honeybadger_block(pid, self.N, self.f, self.ePK, self.eSK,
+        #                            propose=json.dumps(tx_to_send),
+        #                            acs_put_in=my_prbc_input.put_nowait, acs_get_out=dumboacs_thread.get,
+        #                            tpke_bcast=tpke_bcast, tpke_recv=tpke_recv.get)
+
+
         voters = set()
         votes = dict()
 
@@ -607,11 +615,13 @@ class Dumbo():
         gevent.spawn(handle_messages_ld_recv)
         gevent.spawn(handle_messages_sign_recv)
 
+
         block = set()  # TXs
-        for batch in _output:
+        for batch in output:
             decoded_batch = json.loads(batch.decode())
             for tx in decoded_batch:
                 block.add(tx)
+
         '''
         这里我们似乎把所有经过共识处理完的交易都放入block了，但实际上那些跨片交易，不是最后一次处理，不能写入block吧
         所以，在logger的TPS算法中，可用的跨片交易被计算了 len(input_shards)+1 次transcation
