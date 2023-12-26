@@ -1,26 +1,21 @@
-import pickle
-
-#import portalocker
-from gevent import monkey
-
-monkey.patch_all(thread=False)
-
 import re
+from gevent import monkey; monkey.patch_all(thread=False)
+import pickle
 import json
 import logging
 import os
 import traceback, time
 import gevent
 import numpy as np
-from collections import namedtuple, defaultdict
+from collections import defaultdict, namedtuple
 from enum import Enum
 from gevent import Greenlet
 from gevent.queue import Queue
 from merkletree import group_and_build_merkle_tree, merkleVerify, merkleTree
-from dumbobft.core.dumbocommonsubset import dumbocommonsubset
-from dumbobft.core.provablereliablebroadcast import provablereliablebroadcast
-from dumbobft.core.validatedcommonsubset import validatedcommonsubset
-from dumbobft.core.validators import prbc_validate
+from dumbobft.core.speedydumbocommonsubset import speedydumbocommonsubset
+from dumbobft.core.provablebroadcast import provablebroadcast
+from dumbobft.core.validators import pb_validate
+from dumbobft.core.speedmvbacommonsubset import speedmvbacommonsubset
 from honeybadgerbft.core.honeybadger_block import honeybadger_block
 from honeybadgerbft.exceptions import UnknownTagError
 from crypto.ecdsa.ecdsa import ecdsa_sign, ecdsa_vrfy
@@ -65,7 +60,7 @@ BroadcastReceiverQueues = namedtuple(
 
 def broadcast_receiver_loop(recv_func, recv_queues):
     while True:
-        # gevent.sleep(0)
+        #gevent.sleep(0)
         sender, (tag, j, msg) = recv_func()
         if tag not in BroadcastTag.__members__:
             # TODO Post python 3 port: Add exception chaining.
@@ -151,24 +146,26 @@ class Dumbo():
         """Appends the given transaction to the transaction buffer.
         :param tx: Transaction to append to the buffer.
         """
+        #print('backlog_tx', self.id, tx)
+        #if self.logger != None:
+        #    self.logger.info('Backlogged tx at Node %d:' % self.id + str(tx))
+        # Insert transactions to the end of TX buffer
         self.transaction_buffer.put_nowait(tx)
+
     def run_bft(self):
         """Run the Dumbo protocol."""
-        if self.mute:
-            muted_nodes = [each * 3 + 1 for each in range(int((self.N - 1) / 3))]
-            if self.id in muted_nodes:
-                # T = 0.00001
-                while True:
-                    time.sleep(10)
-
         self._stop_recv_loop = False
 
         def _recv_loop():
             """Receive messages."""
-            # print("start recv loop...")
+            #print("start recv loop...")
             while not self._stop_recv_loop:
+                #gevent.sleep(0)
                 try:
-                    (sender, (r, msg)) = self._recv()
+                    (sender, (r, msg) ) = self._recv()
+                    #self.logger.info('recv1' + str((sender, o)))
+                    #print('recv1' + str((sender, o)))
+                    # Maintain an *unbounded* recv queue for each epoch
                     if r not in self._per_round_recv:
                         self._per_round_recv[r] = Queue()
                     # Buffer this message
@@ -176,11 +173,15 @@ class Dumbo():
                 except:
                     continue
 
+        #self._recv_thread = gevent.spawn(_recv_loop)
         self._recv_thread = Greenlet(_recv_loop)
         self._recv_thread.start()
 
         self.s_time = time.time()
-        #print("shard: ", self.shard_id, "node: ", self.id, " round: ", self.epoch, " starts Dumbo BFT consensus")
+
+
+        # For each round...
+        #gevent.sleep(0)
 
         r = self.round
         if r not in self._per_round_recv:
@@ -190,7 +191,7 @@ class Dumbo():
         tx_to_send = []
         for _ in range(self.B):
             tx_to_send.append(self.transaction_buffer.get_nowait())
-        
+
         TXs = read_pkl_file(self.TXs)
         TXs = [tx for tx in TXs if tx not in tx_to_send]
         write_pkl_file(TXs, self.TXs)
@@ -198,16 +199,12 @@ class Dumbo():
         def _make_send(r):
             def _send(j, o):
                 self._send(j, (r, o))
-
             return _send
 
         send_r = _make_send(r)
         recv_r = self._per_round_recv[r].get
-
-        #tx_batch refer to the txs in TX which operated in this epoch(BFT) in this node
-        #proof is its proof
-
         self._run_round(r, tx_to_send, send_r, recv_r, self.epoch)
+
 
         ### VERY IMPORTANT!!! otherwise the program will be block when running  _run_round the second time
         self._stop_recv_loop = True
@@ -221,6 +218,7 @@ class Dumbo():
         else:
             print("node %d breaks" % self.id)
 
+    #
     def _run_round(self, r, tx_to_send, send, recv, epoch):
         """Run one protocol round.
         :param int r: round id
@@ -237,7 +235,7 @@ class Dumbo():
         f = self.f
         break_count = 0
 
-        prbc_recvs = [Queue() for _ in range(N)]
+        pb_recvs = [Queue() for _ in range(N)]
         vacs_recv = Queue()
         tpke_recv = Queue()
         vote_recv = Queue()
@@ -247,16 +245,17 @@ class Dumbo():
         cl_recv = Queue()
         break_recv = Queue()
 
-        my_prbc_input = Queue(1)
+        my_pb_input = Queue(1)
 
-        prbc_outputs = [Queue(1) for _ in range(N)]
-        prbc_proofs = dict()
+        pb_value_outputs = [Queue(1) for _ in range(N)]
+        pb_proof_output = Queue(1)
+        pb_proofs = dict()
 
         vacs_input = Queue(1)
         vacs_output = Queue(1)
 
         recv_queues = BroadcastReceiverQueues(
-            ACS_PRBC=prbc_recvs,
+            ACS_PRBC=pb_recvs,
             ACS_VACS=vacs_recv,
             TPKE=tpke_recv,
             VOTE=vote_recv,
@@ -266,8 +265,13 @@ class Dumbo():
             CL=cl_recv,
             BREAK=break_recv
         )
+
         bc_recv_loop_thread = Greenlet(broadcast_receiver_loop, recv, recv_queues)
         bc_recv_loop_thread.start()
+
+        #print(pid, r, 'tx_to_send:', tx_to_send)
+        #if self.logger != None:
+        #    self.logger.info('Commit tx at Node %d:' % self.id + str(tx_to_send))
 
         def handle_messages_break_recv():
             nonlocal break_count
@@ -276,6 +280,7 @@ class Dumbo():
                 (sender, msg) = break_recv.get()
                 break_count+=1
                 #print(f"shard {self.shard_id} node {self.id} break_count {break_count}, received from {sender}")
+
         def handle_messages_vote_recv():
             nonlocal voters, votes, decides
             while True:
@@ -428,6 +433,7 @@ class Dumbo():
                         #    break
                 except Exception as e:
                     continue
+
         def handle_message_clm_recv():
             clm_signers = set()
             clm_signs = dict()
@@ -456,6 +462,7 @@ class Dumbo():
                     except Exception as e:
                         print(e)
                         continue
+
         def handle_message_cl_recv():
             while True:
                     try:
@@ -500,13 +507,15 @@ class Dumbo():
             send(-1, ('CL_M', '', (tx_invalid, ecdsa_sign(self.sSK2, json.dumps(tx_invalid)))))
         tx_to_send = [tx for tx in tx_to_send if tx not in tx_invalid]
         #print(self.shard_id, 'after ', len(tx_to_send), tx_to_send)
-                
-        def _setup_prbc(j,epoch):
+
+        pb_threads = [None] * N
+
+        def _setup_pb(j):
             """Setup the sub protocols RBC, BA and common coin.
             :param int j: Node index for which the setup is being done.
             """
 
-            def prbc_send(k, o):
+            def pb_send(k, o):
                 """Reliable send operation.
                 :param k: Node to send.
                 :param o: Value to send.
@@ -514,92 +523,95 @@ class Dumbo():
                 send(k, ('ACS_PRBC', j, o))
 
             # Only leader gets input
-            prbc_input = my_prbc_input.get if j == pid else None
+            pb_input = my_pb_input.get if j == pid else None
 
-            if self.debug:
-                prbc_thread = gevent.spawn(provablereliablebroadcast, sid + 'PRBC' + str(r) + str(j), pid, shard_id, N, f,
-                                           self.sPK2s, self.sSK2, j,
-                                           prbc_input, prbc_recvs[j].get, prbc_send, self.logger)
-            else:
-                prbc_thread = gevent.spawn(provablereliablebroadcast, sid + 'PRBC' + str(r) + str(j), pid, shard_id, N, f,
-                                           self.sPK2s, self.sSK2, j,
-                                           prbc_input, prbc_recvs[j].get, prbc_send, str(epoch)+'e'*10)
+            pb_thread = gevent.spawn(provablebroadcast, sid+'PB'+str(r)+str(j), pid, shard_id, 
+                                     N, f, self.sPK2s, self.sSK2, j, pb_input,
+                                     pb_value_outputs[j].put_nowait,
+                                     recv=pb_recvs[j].get, send=pb_send, logger=self.logger)
 
-            def wait_for_prbc_output():
-                value, proof = prbc_thread.get()
-                prbc_proofs[sid + 'PRBC' + str(r) + str(j)] = proof
-                prbc_outputs[j].put_nowait((value, proof))
-
-            gevent.spawn(wait_for_prbc_output)
-        def _setup_vacs():
-
-            def vacs_send(k, o):
-                """Threshold encryption broadcast."""
-                """Threshold encryption broadcast."""
-                send(k, ('ACS_VACS', '', o))
-
-            def vacs_predicate(j, vj):
-                prbc_sid = sid + 'PRBC' + str(r) + str(j)
+            def wait_for_pb_proof():
+                proof = pb_thread.get()
                 try:
-                    proof = vj
-                    if prbc_sid in prbc_proofs.keys():
-                        try:
-                            _prbc_sid, _roothash, _ = proof
-                            assert prbc_sid == _prbc_sid
-                            _, roothash, _ = prbc_proofs[prbc_sid]
-                            assert roothash == _roothash
-                            return True
-                        except AssertionError:
-                            print("1 Failed to verify proof for PB")
-                            return False
-                    else:
-                        assert prbc_validate(prbc_sid, N, f, self.sPK2s, proof)
-                        prbc_proofs[prbc_sid] = proof
-                        return True
-                except AssertionError:
-                    print("2 Failed to verify proof for PB")
-                    return False
+                    pb_proofs[sid+'PB'+str(r)+str(j)] = proof
+                    pb_proof_output.put_nowait(proof)
+                except TypeError as e:
+                    print(e)
+                    #return False
+            # wait for pb proof, only when I am the leader
+            if j == pid:
+                gevent.spawn(wait_for_pb_proof)
 
-            if self.debug:
-                vacs_thread = Greenlet(validatedcommonsubset, sid + 'VACS' + str(r), pid, shard_id, N, f,
-                                       self.sPK, self.sSK, self.sPK1, self.sSK1, self.sPK2s, self.sSK2,
-                                       vacs_input.get, vacs_output.put_nowait,
-                                       vacs_recv.get, vacs_send, vacs_predicate, self.logger)
-            else:
-                vacs_thread = Greenlet(validatedcommonsubset, sid + 'VACS' + str(r), pid, shard_id, N, f,
-                                       self.sPK, self.sSK, self.sPK1, self.sSK1, self.sPK2s, self.sSK2,
-                                       vacs_input.get, vacs_output.put_nowait,
-                                       vacs_recv.get, vacs_send, vacs_predicate)
-            vacs_thread.start()
-        #print("shard: ", self.shard_id, "node: ", self.id, " round: ", self.epoch, " ready to rbc")
-        # N instances of PRBC
+            return pb_thread
+
+        # N instances of PB
         for j in range(N):
-            _setup_prbc(j,epoch)
-        _setup_vacs()
+            #print("start to set up RBC %d" % j)
+            pb_threads[j] = _setup_pb(j)
+
+
+
+        # One instance of (validated) ACS
+        #print("start to set up VACS")
+        def vacs_send(k, o):
+            """Threshold encryption broadcast."""
+            """Threshold encryption broadcast."""
+            send(k, ('ACS_VACS', '', o))
+
+        def vacs_predicate(j, vj):
+            prbc_sid = sid + 'PB' + str(r) + str(j % N)
+            try:
+                proof = vj
+                if prbc_sid in pb_proofs.keys():
+                    try:
+                        _prbc_sid, _digest, _sigmas = proof
+                        assert prbc_sid == _prbc_sid
+                        _, digest, _ = pb_proofs[prbc_sid]
+                        assert digest == _digest
+                        return True
+                    except AssertionError:
+                        print("1 Failed to verify proof for RBC")
+                        return False
+                assert pb_validate(prbc_sid, N, f, self.sPK2s, proof)
+                pb_proofs[prbc_sid] = proof
+                return True
+            except AssertionError:
+                print("2 Failed to verify proof for RBC")
+                return False
+
+        vacs_thread = Greenlet(speedmvbacommonsubset, sid + 'VACS' + str(r), pid, shard_id, N, f,
+                               self.sPK, self.sSK, self.sPK1, self.sSK1, self.sPK2s, self.sSK2,
+                               vacs_input.get, vacs_output.put_nowait,
+                               vacs_recv.get, vacs_send, vacs_predicate, logger=self.logger)
+        vacs_thread.start()
+
         # One instance of TPKE
         def tpke_bcast(o):
             """Threshold encryption broadcast."""
             send(-1, ('TPKE', '', o))
-        # One instance of ACS pid, N, f, prbc_out, vacs_in, vacs_out
-        dumboacs_thread = Greenlet(dumbocommonsubset, pid, N, f, [prbc_output.get for prbc_output in prbc_outputs],
-                                   vacs_input.put_nowait,
-                                   vacs_output.get)
-        dumboacs_thread.start()
-        #print("shard: ", self.shard_id, "node: ", self.id, " round: ", self.epoch, " ready to honeybadger")
 
-        my_prbc_input.put_nowait(json.dumps(tx_to_send))
+        # One instance of ACS pid, N, f, prbc_out, vacs_in, vacs_out
+        dumboacs_thread = Greenlet(speedydumbocommonsubset, pid, N, f,
+                           [_.get for _ in pb_value_outputs],
+                           pb_proof_output.get,
+                           vacs_input.put_nowait,
+                           vacs_output.get)
+
+        dumboacs_thread.start()
+
+        #print("shard: ", self.shard_id, "node: ", self.id, " round: ", self.epoch, " ready to honeybadger")
+        my_pb_input.put_nowait(json.dumps(tx_to_send))
         _output = dumboacs_thread.get()
 
         output = []
-        for ii in _output:
-            if ii != None:
-                output.append(ii)
+        for value in _output:
+            if value != None:
+                output.append(value)
         output = tuple(output)
         #_output = honeybadger_block(pid, self.N, self.f, self.ePK, self.eSK,
         #                            propose=json.dumps(tx_to_send),
         #                            acs_put_in=my_prbc_input.put_nowait, acs_get_out=dumboacs_thread.get,
         #                            tpke_bcast=tpke_bcast, tpke_recv=tpke_recv.get)
-
 
         voters = set()
         votes = dict()
@@ -615,21 +627,12 @@ class Dumbo():
         gevent.spawn(handle_messages_ld_recv)
         gevent.spawn(handle_messages_sign_recv)
 
-
-        block = set()  # TXs
+        block = set()
         for batch in output:
-            decoded_batch = json.loads(batch.decode())
+            decoded_batch = json.loads(batch)
             for tx in decoded_batch:
                 block.add(tx)
 
-        '''
-        这里我们似乎把所有经过共识处理完的交易都放入block了，但实际上那些跨片交易，不是最后一次处理，不能写入block吧
-        所以，在logger的TPS算法中，可用的跨片交易被计算了 len(input_shards)+1 次transcation
-        不过其实无所谓，反正也不用这个TPS值，因为总TPS包含很多没进共识就被删掉的交易，还是会大很多。
-        '''
-
-
-        #print(len(list(block)))
         if self.logger != None:
             tx_cnt = str(list(block)).count("Dummy TX")
             self.txcnt += tx_cnt
@@ -654,21 +657,6 @@ class Dumbo():
         #print(merkletree,shard_branch)
         rt = merkletree[1]
 
-        #delete txs inside shard
-        '''TXs = read_pkl_file(self.TXs)
-        tx_batch = json.loads(txs)
-        #print(len(tx_batch))
-        print('node %d in shard %d before BFT has %d TXS' %(self.id, self.shard_id, len(TXs)))
-        for tx in tx_batch:
-            #print(tx)
-            if tx in TXs:
-                TXs.remove(tx)
-        print('node %d in shard %d after BFT has %d TXS' %(self.id, self.shard_id, len(TXs)))
-        write_pkl_file(TXs, self.TXs)'''
-
-
-        #print(self.shard_id,self.id,rt,shard_branch)
-
         # broadcast LD message except itself
         # (TODO: Sent according to the shards involved)
         if self.id == 0:
@@ -687,10 +675,13 @@ class Dumbo():
 
         self.logger.info(f"after round {self.epoch} , {self.TXs} exists {len(read_pkl_file(self.TXs))} txs")
         print(f"after round {self.epoch} , {self.TXs} exists {len(read_pkl_file(self.TXs))} txs")
+        
+        dumboacs_thread.kill()
         bc_recv_loop_thread.kill()
+        vacs_thread.kill()
+        for j in range(N):
+            pb_threads[j].kill()
+
         return list(block)
 
-
-
     # TODO： make help and callhelp threads to handle the rare cases when vacs (vaba) returns None
-
