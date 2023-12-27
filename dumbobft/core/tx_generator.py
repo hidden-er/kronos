@@ -7,15 +7,16 @@ def tx_generator(size=250, shard_num=4, chars=string.ascii_uppercase + string.di
         common_shard = random.randint(0, shard_num - 1)
         input_valid = random.choice([0, 1])
         #shard_info = f", Input Shard: {str([common_shard])}, Input Valid: {str([input_valid])}, Output Shard: {common_shard}, Output Valid: {1}"
-        shard_info = f", Input Shard: {str([common_shard])}, Input Valid: [1], Output Shard: {common_shard}, Output Valid: {1}"
+        shard_info = f", Input Shard: {str([common_shard])}, Input Valid: [1], BFT Number: [1], Output Shard: {common_shard}, Output Valid: {1}"
 
     # 10% probability: input and output shards are different
     else:
         input_shard_num = random.randint(1, shard_num-1)
         input_shards = sorted(random.sample(range(0, shard_num), input_shard_num))
         input_valid = random.choices([0, 1],weights=[20, 80],k=input_shard_num)
+        BFT_number = [0] * input_shard_num
         output_shard = random.choice([shard for shard in range(shard_num) if shard not in input_shards])
-        shard_info = f", Input Shard: {str(input_shards)}, Input Valid: {str(input_valid)}, Output Shard: {output_shard}, Output Valid: {0}"
+        shard_info = f", Input Shard: {str(input_shards)}, Input Valid: {str(input_valid)}, BFT Number: {str(BFT_number)}, Output Shard: {output_shard}, Output Valid: {0}"
 
     random_string = ''.join(random.choice(chars) for _ in range(size - 10))
 

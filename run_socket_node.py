@@ -166,7 +166,7 @@ if __name__ == '__main__':
     block_delay = sum(block_numbers) / len(block_numbers)
 
     num = 0.9
-    latency = num * block_delay + (1 - num) * (block_delay + round_delay)
+    latency = num * block_delay + (1 - num) * (2 * block_delay + round_delay)
 
     logg.info('shard_id %d node %d stop; total time: %f; total TPS: %f; average latency: %f' % (shard_id, i, total_time, (
                 20000 - len(read_pkl_file(f'/home/lyn/BDT/TXs_file/TXs{shard_id * 4 + i}'))) / total_time, latency))
