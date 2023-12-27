@@ -71,15 +71,17 @@ def write_pkl_file(data, file_path):
 def parse_shard_info(tx):
     input_shards = re.findall(r'Input Shard: (\[.*?\])', tx)[0]
     input_valids = re.findall(r'Input Valid: (\[.*?\])', tx)[0]
+    BFT_number = re.findall(r'BFT Number: (\[.*?\])', tx)[0]
     output_shard = re.findall(r'Output Shard: (\d+)', tx)[0]
     output_valid = re.findall(r'Output Valid: (\d+)', tx)[0]
 
     input_shards = eval(input_shards)
     input_valids = eval(input_valids)
+    BFT_number = eval(BFT_number)
     output_shard = int(output_shard)
     output_valid = int(output_valid)
 
-    return input_shards, input_valids, output_shard, output_valid
+    return input_shards, input_valids, BFT_number, output_shard, output_valid
 
 
 class DumboBFTNode(Dumbo):
@@ -119,7 +121,7 @@ class DumboBFTNode(Dumbo):
                         break'''
             k = 0
             for tx in TXs:
-                input_shards, input_valids, output_shard, output_valid = parse_shard_info(tx)
+                input_shards, input_valids, BFT_number, output_shard, output_valid = parse_shard_info(tx)
                 if self.shard_id in input_shards or (
                         self.shard_id == output_shard and output_valid == 1):
                     Dumbo.submit_tx(self, tx)

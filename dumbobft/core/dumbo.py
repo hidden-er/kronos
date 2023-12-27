@@ -33,15 +33,17 @@ def write_pkl_file(data, file_path):
 def parse_shard_info(tx):
     input_shards = re.findall(r'Input Shard: (\[.*?\])', tx)[0]
     input_valids = re.findall(r'Input Valid: (\[.*?\])', tx)[0]
+    BFT_number = re.findall(r'BFT Number: (\[.*?\])', tx)[0]
     output_shard = re.findall(r'Output Shard: (\d+)', tx)[0]
     output_valid = re.findall(r'Output Valid: (\d+)', tx)[0]
 
     input_shards = eval(input_shards)
     input_valids = eval(input_valids)
+    BFT_number = eval(BFT_number)
     output_shard = int(output_shard)
     output_valid = int(output_valid)
 
-    return input_shards, input_valids, output_shard, output_valid
+    return input_shards, input_valids, BFT_number, output_shard, output_valid
 
 class BroadcastTag(Enum):
     ACS_PRBC = 'ACS_PRBC'
@@ -325,7 +327,7 @@ class Dumbo():
                     '''print('[LD] Node %d in shard %d receive LD message from %d' % (self.id, self.shard_id,sender))'''
                     #print(tx_batch)        
                     # extract the transactions output shard of which is this shard
-                    txs = [tx for tx in json.loads(tx_batch) if parse_shard_info(tx)[2] == self.shard_id]
+                    txs = [tx for tx in json.loads(tx_batch) if parse_shard_info(tx)[3] == self.shard_id]
 
                     #if do not exist tx that output shard == self.shard_id
                     if len(txs) == 0:
@@ -364,14 +366,16 @@ class Dumbo():
                     '''
                     # record shard_id that sends tx
                     for tx in txs:
-                        _, _, _, output_valid = parse_shard_info(tx)
-                        if output_valid == 0:
-                            self.pool[tx].append(sender // self.N)
+                        input_shards, _, BFT_number, _, output_valid = parse_shard_info(tx)
+                        shard_id = sender // self.N
+                        if BFT_number[input_shards.index(shard_id)] == 2 and output_valid == 0:
+                            print(tx, shard_id)
+                            self.pool[tx].append(shard_id)
 
                     matching_txs = []
                     for tx_pool in self.pool:
                         #print(tx_pool, self.pool[tx_pool])
-                        input_shards, _,_,_ = parse_shard_info(tx_pool)
+                        input_shards, _, _, _, _ = parse_shard_info(tx_pool)
                         if set(self.pool[tx_pool]) == set(input_shards):
                             matching_txs.append(tx_pool)
                         
@@ -420,7 +424,7 @@ class Dumbo():
                                         TXs.remove(tx_pool)
                                         TXs.append(tx_to_append)
                                         del self.pool[tx_pool]'''
-                                    _, _, _, output_valid = parse_shard_info(tx_pool)
+                                    _, _, _, _, output_valid = parse_shard_info(tx_pool)
                                     tx_to_append = tx_pool.replace(f'Output Valid: {output_valid}', f'Output Valid: {1}')
                                     #TXs.remove(tx_pool)
                                     TXs.append(tx_to_append)
@@ -480,7 +484,7 @@ class Dumbo():
                             continue
 
                         for tx in txs:
-                            input_shards, _, output_shard, _ = parse_shard_info(tx)
+                            input_shards, _, _, output_shard, _ = parse_shard_info(tx)
                             if self.shard_id in input_shards:
                                 '''TODO: 本分片作为输入分片 已对该交易进行了BFT共识 需要构造BACK-TX 将该输入退还至原地址''' 
                                 pass
@@ -500,7 +504,7 @@ class Dumbo():
         tx_invalid = []
         #print(self.shard_id, 'before ', len(tx_to_send), tx_to_send)
         for tx in tx_to_send:
-            input_shards, input_valids, _, _ = parse_shard_info(tx)
+            input_shards, input_valids, _, _, _ = parse_shard_info(tx)
             if self.shard_id in input_shards and input_valids[input_shards.index(self.shard_id)] == 0:
                 tx_invalid.append(tx)
         if tx_invalid:
@@ -640,6 +644,19 @@ class Dumbo():
             end = time.time()
             self.logger.info('ACS Block Delay at Node %d: ' % self.id + str(end - self.s_time))
             self.logger.info('Current Block\'s TPS at Node %d: ' % self.id + str(tx_cnt / (end - self.s_time)))
+        
+        TXs = read_pkl_file(self.TXs)
+        for tx in block:
+            input_shards, input_valids, BFT_number, output_shard, output_valid = parse_shard_info(tx)
+            if output_shard not in input_shards:
+                #print("[REPLACE] before ", tx)
+                BFT_number_before = BFT_number.copy()
+                BFT_number[input_shards.index(self.shard_id)] += 1
+                #print(BFT_number_before, BFT_number)
+                tx_to_append = tx.replace(f'BFT Number: {BFT_number_before}', f'BFT Number: {BFT_number}')
+                TXs.append(tx_to_append)
+                #print("[REPLACE] after ", tx_to_append)
+        write_pkl_file(TXs, self.TXs)
 
         tx_batch = json.dumps(list(block))
         merkle_tree = group_and_build_merkle_tree(tx_batch)
