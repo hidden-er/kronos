@@ -62,6 +62,9 @@ def broadcast_receiver_loop(recv_func, recv_queues):
     while True:
         #gevent.sleep(0)
         sender, (tag, j, msg) = recv_func()
+        #if tag == "ACS_PRBC":
+        #    sender = j
+        #print("broadcast_receiver_loop",sender, (tag, j, msg))
         if tag not in BroadcastTag.__members__:
             # TODO Post python 3 port: Add exception chaining.
             # See https://www.python.org/dev/peps/pep-3134/
@@ -73,6 +76,7 @@ def broadcast_receiver_loop(recv_func, recv_queues):
             recv_queue = recv_queue[j]
         try:
             recv_queue.put_nowait((sender, msg))
+            #print("recv_queue.put_nowait",(sender,msg))
         except AttributeError as e:
             print("error", sender, (tag, j, msg))
             traceback.print_exc(e)
@@ -520,6 +524,7 @@ class Dumbo():
                 :param k: Node to send.
                 :param o: Value to send.
                 """
+                #print(f"send({k},('ACS_PRBC', {j}, {o}))")
                 send(k, ('ACS_PRBC', j, o))
 
             # Only leader gets input
@@ -539,6 +544,7 @@ class Dumbo():
                     print(e)
                     #return False
             # wait for pb proof, only when I am the leader
+
             if j == pid:
                 gevent.spawn(wait_for_pb_proof)
 

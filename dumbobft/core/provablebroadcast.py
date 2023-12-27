@@ -85,8 +85,11 @@ def provablebroadcast(sid, pid, shard_id, N, f, PK2s, SK2, leader, input, value_
         if msg[0] == 'PB_SEND' and digestFromLeader is None:
             # PB_SEND message
             (_, v) = msg
+
             if j % N != leader:
-                print("Node %d receives a PB_SEND message from node %d other than leader %d" % (pid, j % N, leader), msg)
+                #print(j,N)
+                #print("Node %d receives a PB_SEND message from node %d other than leader %d" % (pid, j % N, leader), msg)
+                print("Node %d receives a PB_SEND message from node %d other than leader %d" % (pid, j % N, leader))
                 continue
             digestFromLeader = hash((sid, hash(v)))
             #print("Node", pid, "has digest:", digestFromLeader, "for leader", leader, "session id", sid, "message", m)
@@ -107,7 +110,9 @@ def provablebroadcast(sid, pid, shard_id, N, f, PK2s, SK2, leader, input, value_
             try:
                 assert ecdsa_vrfy(PK2s[j % N], digestFromLeader, sig)
             except AssertionError:
-                print("Signature share failed in CBC!", (sid, pid, j % N, msg))
+                #print("Signature share failed in CBC!", (sid, pid, j % N, msg))
+                print("Signature share failed in CBC!", (sid, pid, j % N))
+                print(PK2s[j % N], digestFromLeader, sig)
                 continue
             #print("I accept PB_ECHO from node %d" % j)
             cbc_echo_sshares[j % N] = sig
