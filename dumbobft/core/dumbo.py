@@ -194,9 +194,9 @@ class Dumbo():
         for _ in range(self.B):
             tx_to_send.append(self.transaction_buffer.get_nowait())
 
-        TXs = read_pkl_file(self.TXs)
+        '''TXs = read_pkl_file(self.TXs)
         TXs = [tx for tx in TXs if tx not in tx_to_send]
-        write_pkl_file(TXs, self.TXs)
+        write_pkl_file(TXs, self.TXs)'''
 
         def _make_send(r):
             def _send(j, o):
@@ -415,7 +415,8 @@ class Dumbo():
 
                            # receive n-f SIGN messages, verify their signatures, delete these transactions from pool and TXs, and set their outputvalid to 1
                             if len(signers) == self.N - self.f:
-                                TXs = read_pkl_file(self.TXs)
+                                #TXs = read_pkl_file(self.TXs)
+                                cur = self.TXs.cursor()
                                 #print('[FINISH] before set value=1 TXs have %d txs' %len(TXs))
                                 for tx_pool in txs:
                                     '''input_shards, input_valids, output_shard, output_valid = parse_shard_info(tx_pool)
@@ -427,11 +428,13 @@ class Dumbo():
                                     _, _, _, _, output_valid = parse_shard_info(tx_pool)
                                     tx_to_append = tx_pool.replace(f'Output Valid: {output_valid}', f'Output Valid: {1}')
                                     #TXs.remove(tx_pool)
-                                    TXs.append(tx_to_append)
+                                    #TXs.append(tx_to_append)
+                                    cur.execute('INSERT INTO txlist (tx) VALUES (?)', (tx_to_append,))
+                                    self.TXs.commit()                                   
                                     del self.pool[tx_pool]
 
                                 #print('[FINISH] after set value=1 TXs have %d txs' %len(TXs))
-                                write_pkl_file(TXs, self.TXs)
+                                #write_pkl_file(TXs, self.TXs)
 
                         #if sign_cnt >= self.N - self.f:
                         #    break
@@ -645,7 +648,8 @@ class Dumbo():
             self.logger.info('ACS Block Delay at Node %d: ' % self.id + str(end - self.s_time))
             self.logger.info('Current Block\'s TPS at Node %d: ' % self.id + str(tx_cnt / (end - self.s_time)))
         
-        TXs = read_pkl_file(self.TXs)
+        #TXs = read_pkl_file(self.TXs)
+        cur = self.TXs.cursor()
         for tx in block:
             input_shards, input_valids, BFT_number, output_shard, output_valid = parse_shard_info(tx)
             if output_shard not in input_shards:
@@ -654,9 +658,11 @@ class Dumbo():
                 BFT_number[input_shards.index(self.shard_id)] += 1
                 #print(BFT_number_before, BFT_number)
                 tx_to_append = tx.replace(f'BFT Number: {BFT_number_before}', f'BFT Number: {BFT_number}')
-                TXs.append(tx_to_append)
+                #TXs.append(tx_to_append)
+                cur.execute('INSERT INTO txlist (tx) VALUES (?)', (tx_to_append,))
+                self.TXs.commit()                
                 #print("[REPLACE] after ", tx_to_append)
-        write_pkl_file(TXs, self.TXs)
+        #write_pkl_file(TXs, self.TXs)
 
         tx_batch = json.dumps(list(block))
         merkle_tree = group_and_build_merkle_tree(tx_batch)
@@ -690,8 +696,11 @@ class Dumbo():
             time.sleep(0)
         #time.sleep(10)
 
-        self.logger.info(f"after round {self.epoch} , {self.TXs} exists {len(read_pkl_file(self.TXs))} txs")
-        print(f"after round {self.epoch} , {self.TXs} exists {len(read_pkl_file(self.TXs))} txs")
+        cur = self.TXs.cursor()
+        cur.execute('SELECT * FROM txlist')
+        TXs = cur.fetchall()
+        self.logger.info(f"after round {self.epoch} , node {self.id} in shard {self.shard_id} exists {len(TXs)} txs")
+        print(f"after round {self.epoch} , node {self.id} in shard {self.shard_id} exists {len(TXs)} txs")
         
         dumboacs_thread.kill()
         bc_recv_loop_thread.kill()
