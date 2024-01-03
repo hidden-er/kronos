@@ -37,6 +37,7 @@ class NetworkServer (Process):
         def _handler(sock, address):
             jid = self._address_to_id(address)
             buf = b''
+            #print("_handler,", sock.getsockname(), sock.getpeername())
             try:
                 while not self.stop.value:
                     buf += sock.recv(2_000_000)
@@ -59,8 +60,9 @@ class NetworkServer (Process):
             except Exception as e:
                 self.logger.error(str((e, traceback.print_exc())))
 
-        self.streamServer = StreamServer((self.ip, self.port), _handler)
-        self.streamServer.serve_forever()
+        if self.ip == '127.0.0.1' or self.ip == "0.0.0.0":
+            self.streamServer = StreamServer((self.ip, self.port), _handler)
+            self.streamServer.serve_forever()
 
 
     def run(self):
@@ -73,7 +75,7 @@ class NetworkServer (Process):
 
     def _address_to_id(self, address: tuple):
         for i in range(self.N):
-            if address[0] != '127.0.0.1' and address[0] == self.addresses_list[i][0]:
+            if address[0] != '127.0.0.1' and address[0]!= '0.0.0.0' and address and address[0] == self.addresses_list[i][0] and address[1] == self.addresses_list[i][1]:
                 return i
         return int((address[1] - 10000) / 200)
 
