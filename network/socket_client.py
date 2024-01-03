@@ -79,14 +79,16 @@ class NetworkClient (Process):
 
     def _connect(self, j: int):
         sock = socket.socket()
-        if self.ip == '127.0.0.1':
+        if self.ip == '127.0.0.1' or self.ip == "0.0.0.0":
             try:
                 sock.bind((self.ip, self.port + j + random.randint(1, 100)))
+                #sock.bind((self.ip, self.port + j + 1))
             except:
                 return False
         try:
             sock.connect(self.addresses_list[j])
             self.socks[j] = sock
+            #print("_connect,",sock.getsockname(),sock.getpeername())
             return True
         except Exception as e1:
             return False
@@ -198,6 +200,7 @@ class NetworkClient (Process):
                         for i in range(self.node_num):
                             if i != self.id:
                                 self.sock_queues[i + self.shard_id * self.node_num].put_nowait(o)
+                                #print('_handle_send_loop',j,o)
                     elif j == -3: # -3 means broadcast to all nodes except those in the same shard
                         for i in range(self.N):
                             # Calculate the shard_id of the target node
@@ -273,4 +276,3 @@ class NetworkClient (Process):
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
         return logger
-
