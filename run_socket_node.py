@@ -122,7 +122,7 @@ if __name__ == '__main__':
     # ================================================================================
     logg = set_consensus_log(i + shard_id * N)
 
-    bft = DumboBFTNode(sid, shard_id, i, B, shard_num, N, f, f'/home/lyn/BDT/TXs_file/TXs{shard_id * 4 + i}', bft_from_server, bft_to_client, net_ready, stop, logg, K, mute=False, debug=False, bft_running=bft_running)
+    bft = DumboBFTNode(sid, shard_id, i, B, shard_num, N, f, f'/home/ubuntu/kronos/TXs_file/TXs{shard_id * 4 + i}', bft_from_server, bft_to_client, net_ready, stop, logg, K, mute=False, debug=False, bft_running=bft_running)
     #bft = DumboBFTNode(sid, shard_id, i, B, shard_num, N, f, f'/home/lyn/BDT/TXs_file/TXs', bft_from_server,bft_to_client, net_ready, stop, K, mute=False, debug=False, bft_running=bft_running)
 
     net_server.start()
@@ -169,9 +169,9 @@ if __name__ == '__main__':
     latency = num * block_delay + (1 - num) * (block_delay + round_delay)
 
     logg.info('shard_id %d node %d stop; total time: %f; total TPS: %f; average latency: %f' % (shard_id, i, total_time, (
-                20000 - len(read_pkl_file(f'/home/lyn/BDT/TXs_file/TXs{shard_id * 4 + i}'))) / total_time, latency))
+                20000 - len(read_pkl_file(f'/home/ubuntu/kronos/TXs_file/TXs{shard_id * 4 + i}'))) / total_time, latency))
     print('shard_id %d node %d stop; total time: %f; total TPS: %f; average latency: %f' % (shard_id, i, total_time, (
-                20000 - len(read_pkl_file(f'/home/lyn/BDT/TXs_file/TXs{shard_id * 4 + i}'))) / total_time, latency))
+                20000 - len(read_pkl_file(f'/home/ubuntu/kronos/TXs_file/TXs{shard_id * 4 + i}'))) / total_time, latency))
 
     time.sleep(10)
     net_client.join()
