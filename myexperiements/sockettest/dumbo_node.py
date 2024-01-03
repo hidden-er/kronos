@@ -104,35 +104,30 @@ class DumboBFTNode(Dumbo):
     def prepare_bootstrap(self):
         #self.logger.info('node id %d is inserting dummy payload TXs' % (self.id))
         if self.mode == 'test' or 'debug':  # K * max(Bfast * S, Bacs)
-            TXs = read_pkl_file(self.TXs)
+            cur = self.TXs.cursor()
+            cur.execute('SELECT * FROM txlist')
+            TXs = cur.fetchall()
             self.logger.info('node %d in shard %d before extract batch has %d TXS' % (self.id, self.shard_id, len(TXs)))
             print('node %d in shard %d before extract batch has %d TXS' % (self.id, self.shard_id, len(TXs)))
-
-            '''k = 0
-            for tx in TXs:
-                input_shards, input_valids, output_shard, output_valid = parse_shard_info(tx)
-                if (self.shard_id in input_shards and input_valids[input_shards.index(self.shard_id)] == 1) or (
-                        self.shard_id == output_shard and output_valid == 1):
-                    Dumbo.submit_tx(self, tx)
-                    k += 1
-                    if k == self.B:
-                        break'''
             k = 0
             for tx in TXs:
-                input_shards, input_valids, output_shard, output_valid = parse_shard_info(tx)
+                cur.execute('DELETE FROM txlist WHERE tx=?', (tx[0],))
+
+                input_shards, input_valids, output_shard, output_valid = parse_shard_info(tx[0])
                 if self.shard_id in input_shards or (
                         self.shard_id == output_shard and output_valid == 1):
-                    Dumbo.submit_tx(self, tx)
+                    Dumbo.submit_tx(self, tx[0])
                     k += 1
                     if k == self.B:
                         break
-                else:
-                    TXs.remove(tx)
 
+            self.TXs.commit()
+            cur.execute('SELECT * FROM txlist')
+            TXs = cur.fetchall()
             self.logger.info('node %d in shard %d after extract batch has %d TXS' % (self.id, self.shard_id, len(TXs)))
             print('node %d in shard %d after extract batch has %d TXS' % (self.id, self.shard_id, len(TXs)))
 
-            write_pkl_file(TXs,self.TXs)
+            #write_pkl_file(TXs,self.TXs)
             #print(len(TXs))
             #print("k=",k)
         else:

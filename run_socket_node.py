@@ -1,3 +1,4 @@
+import sqlite3
 from gevent import monkey;
 
 monkey.patch_all(thread=False)
@@ -122,7 +123,17 @@ if __name__ == '__main__':
     # ================================================================================
     logg = set_consensus_log(i + shard_id * N)
 
-    bft = DumboBFTNode(sid, shard_id, i, B, shard_num, N, f, f'/home/ubuntu/kronos/TXs_file/TXs{shard_id * 4 + i}', bft_from_server, bft_to_client, net_ready, stop, logg, K, mute=False, debug=False, bft_running=bft_running)
+    id = shard_id * N + i
+    conn = sqlite3.connect(f'./node_dbs/node{id}.db' )
+    cur = conn.cursor()
+    cur.execute('DROP TABLE IF EXISTS txlist')
+    TXs = read_pkl_file('./TXs')
+    cur.execute('create table if not exists txlist (tx text primary key)') 
+    for tx in TXs:
+        cur.execute('insert into txlist (tx) values (?)', (tx,))
+    conn.commit()
+
+    bft = DumboBFTNode(sid, shard_id, i, B, shard_num, N, f, conn, bft_from_server, bft_to_client, net_ready, stop, logg, K, mute=False, debug=False, bft_running=bft_running)
     #bft = DumboBFTNode(sid, shard_id, i, B, shard_num, N, f, f'/home/lyn/BDT/TXs_file/TXs', bft_from_server,bft_to_client, net_ready, stop, K, mute=False, debug=False, bft_running=bft_running)
 
     net_server.start()
@@ -138,7 +149,7 @@ if __name__ == '__main__':
 
 
     start = time.time()
-    for j in range(10):
+    for j in range(5):
         logg.info('shard_id %d, node %d BFT round %d' % (shard_id, i, j))
         print('shard_id %d, node %d BFT round %d' % (shard_id, i, j))
         #print(f"shard_id {shard_id}, node {i} BFT round {j}")
@@ -167,11 +178,13 @@ if __name__ == '__main__':
 
     num = 0.9
     latency = num * block_delay + (1 - num) * (block_delay + round_delay)
-
+    
+    cur.execute('SELECT * FROM txlist')
+    TXs = cur.fetchall()
     logg.info('shard_id %d node %d stop; total time: %f; total TPS: %f; average latency: %f' % (shard_id, i, total_time, (
-                20000 - len(read_pkl_file(f'/home/ubuntu/kronos/TXs_file/TXs{shard_id * 4 + i}'))) / total_time, latency))
+                20000 - len(TXs)) / total_time, latency))
     print('shard_id %d node %d stop; total time: %f; total TPS: %f; average latency: %f' % (shard_id, i, total_time, (
-                20000 - len(read_pkl_file(f'/home/ubuntu/kronos/TXs_file/TXs{shard_id * 4 + i}'))) / total_time, latency))
+                20000 - len(TXs)) / total_time, latency))
 
     time.sleep(10)
     net_client.join()
