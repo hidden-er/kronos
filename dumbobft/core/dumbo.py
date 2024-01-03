@@ -62,9 +62,6 @@ def broadcast_receiver_loop(recv_func, recv_queues):
     while True:
         #gevent.sleep(0)
         sender, (tag, j, msg) = recv_func()
-        #if tag == "ACS_PRBC":
-        #    sender = j
-        #print("broadcast_receiver_loop",sender, (tag, j, msg))
         if tag not in BroadcastTag.__members__:
             # TODO Post python 3 port: Add exception chaining.
             # See https://www.python.org/dev/peps/pep-3134/
@@ -76,7 +73,6 @@ def broadcast_receiver_loop(recv_func, recv_queues):
             recv_queue = recv_queue[j]
         try:
             recv_queue.put_nowait((sender, msg))
-            #print("recv_queue.put_nowait",(sender,msg))
         except AttributeError as e:
             print("error", sender, (tag, j, msg))
             traceback.print_exc(e)
@@ -196,9 +192,9 @@ class Dumbo():
         for _ in range(self.B):
             tx_to_send.append(self.transaction_buffer.get_nowait())
 
-        TXs = read_pkl_file(self.TXs)
+        '''TXs = read_pkl_file(self.TXs)
         TXs = [tx for tx in TXs if tx not in tx_to_send]
-        write_pkl_file(TXs, self.TXs)
+        write_pkl_file(TXs, self.TXs)'''
 
         def _make_send(r):
             def _send(j, o):
@@ -415,7 +411,8 @@ class Dumbo():
 
                            # receive n-f SIGN messages, verify their signatures, delete these transactions from pool and TXs, and set their outputvalid to 1
                             if len(signers) == self.N - self.f:
-                                TXs = read_pkl_file(self.TXs)
+                                #TXs = read_pkl_file(self.TXs)
+                                cur = self.TXs.cursor()
                                 #print('[FINISH] before set value=1 TXs have %d txs' %len(TXs))
                                 for tx_pool in txs:
                                     '''input_shards, input_valids, output_shard, output_valid = parse_shard_info(tx_pool)
@@ -427,11 +424,13 @@ class Dumbo():
                                     _, _, _, output_valid = parse_shard_info(tx_pool)
                                     tx_to_append = tx_pool.replace(f'Output Valid: {output_valid}', f'Output Valid: {1}')
                                     #TXs.remove(tx_pool)
-                                    TXs.append(tx_to_append)
+                                    #TXs.append(tx_to_append)
+                                    cur.execute('INSERT INTO txlist (tx) VALUES (?)', (tx_to_append,))
+                                    self.TXs.commit()
                                     del self.pool[tx_pool]
 
                                 #print('[FINISH] after set value=1 TXs have %d txs' %len(TXs))
-                                write_pkl_file(TXs, self.TXs)
+                                #write_pkl_file(TXs, self.TXs)
 
                         #if sign_cnt >= self.N - self.f:
                         #    break
@@ -502,7 +501,7 @@ class Dumbo():
         gevent.spawn(handle_messages_break_recv)
 
         tx_invalid = []
-        #print(self.shard_id, 'before ', len(tx_to_send), tx_to_send)
+        #print(self.shard_id, 'before ', len(tx_to_send))
         for tx in tx_to_send:
             input_shards, input_valids, _, _ = parse_shard_info(tx)
             if self.shard_id in input_shards and input_valids[input_shards.index(self.shard_id)] == 0:
@@ -510,7 +509,7 @@ class Dumbo():
         if tx_invalid:
             send(-1, ('CL_M', '', (tx_invalid, ecdsa_sign(self.sSK2, json.dumps(tx_invalid)))))
         tx_to_send = [tx for tx in tx_to_send if tx not in tx_invalid]
-        #print(self.shard_id, 'after ', len(tx_to_send), tx_to_send)
+        #print(self.shard_id, 'after ', len(tx_to_send))
 
         pb_threads = [None] * N
 
@@ -524,7 +523,6 @@ class Dumbo():
                 :param k: Node to send.
                 :param o: Value to send.
                 """
-                #print(f"send({k},('ACS_PRBC', {j}, {o}))")
                 send(k, ('ACS_PRBC', j, o))
 
             # Only leader gets input
@@ -544,7 +542,6 @@ class Dumbo():
                     print(e)
                     #return False
             # wait for pb proof, only when I am the leader
-
             if j == pid:
                 gevent.spawn(wait_for_pb_proof)
 
@@ -679,8 +676,11 @@ class Dumbo():
             time.sleep(0)
         #time.sleep(10)
 
-        self.logger.info(f"after round {self.epoch} , {self.TXs} exists {len(read_pkl_file(self.TXs))} txs")
-        print(f"after round {self.epoch} , {self.TXs} exists {len(read_pkl_file(self.TXs))} txs")
+        cur = self.TXs.cursor()
+        cur.execute('SELECT * FROM txlist')
+        TXs = cur.fetchall()
+        self.logger.info(f"after round {self.epoch} , node {self.id} in shard {self.shard_id} exists {len(TXs)} txs")
+        print(f"after round {self.epoch} , node {self.id} in shard {self.shard_id} exists {len(TXs)} txs")
         
         dumboacs_thread.kill()
         bc_recv_loop_thread.kill()
