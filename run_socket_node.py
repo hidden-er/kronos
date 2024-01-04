@@ -51,6 +51,8 @@ if __name__ == '__main__':
                         help='identifier of node', type=int)
     parser.add_argument('--shard_id', metavar='shard_id', required=True,
                         help='identifier of shard', type=int)
+    parser.add_argument('--tx_num', metavar='tx_num', required=True,
+                        help='number of transactions', type=int)
     parser.add_argument('--shard_num', metavar='shard_num', required=True,
                         help='number of shards', type=int)
     parser.add_argument('--N', metavar='N', required=True,
@@ -59,8 +61,10 @@ if __name__ == '__main__':
                         help='number of faulties', type=int)
     parser.add_argument('--B', metavar='B', required=True,
                         help='size of batch', type=int)
-    parser.add_argument('--K', metavar='K', required=True,
-                        help='rounds to execute', type=int)
+    parser.add_argument('--K', metavar='K', required=False,
+                        help='rounds to execute', type=int, default=1)
+    parser.add_argument('--R', metavar='R', required=True,
+                        help='number of rounds', type=int)
     parser.add_argument('--S', metavar='S', required=False,
                         help='slots to execute', type=int, default=50)
     parser.add_argument('--M', metavar='M', required=False,
@@ -69,8 +73,8 @@ if __name__ == '__main__':
                         help='whether to debug mode', type=bool, default=False)
     args = parser.parse_args()
 
-    sid, i, shard_id, shard_num, N, f, B, K, S, M, D = (
-        args.sid, args.id, args.shard_id, args.shard_num, args.N, args.f, args.B, args.K, args.S, args.M, args.D)
+    sid, i, shard_id, tx_num, shard_num, N, f, B, K, R, S, M, D = (
+        args.sid, args.id, args.shard_id, args.tx_num, args.shard_num, args.N, args.f, args.B, args.K, args.R, args.S, args.M, args.D)
     rnd = random.Random(sid)
 
 
@@ -149,7 +153,7 @@ if __name__ == '__main__':
 
 
     start = time.time()
-    for j in range(5):
+    for j in range(R):
         logg.info('shard_id %d, node %d BFT round %d' % (shard_id, i, j))
         print('shard_id %d, node %d BFT round %d' % (shard_id, i, j))
         #print(f"shard_id {shard_id}, node {i} BFT round {j}")
@@ -182,9 +186,9 @@ if __name__ == '__main__':
     cur.execute('SELECT * FROM txlist')
     TXs = cur.fetchall()
     logg.info('shard_id %d node %d stop; total time: %f; total TPS: %f; average latency: %f' % (shard_id, i, total_time, (
-                20000 - len(TXs)) / total_time, latency))
+                tx_num - len(TXs)) / total_time, latency))
     print('shard_id %d node %d stop; total time: %f; total TPS: %f; average latency: %f' % (shard_id, i, total_time, (
-                20000 - len(TXs)) / total_time, latency))
+                tx_num - len(TXs)) / total_time, latency))
 
     time.sleep(10)
     net_client.join()
