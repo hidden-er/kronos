@@ -6,14 +6,34 @@ N=2
 node=16
 
 # public IPs --- This is the public IPs of AWS servers
-pubIPsVar=([0]='18.167.99.158'
-  [1]='43.198.227.65')
+pubIPsVar=([0]='43.198.182.13'
+  [1]='43.198.224.244')
+
+# Generate hosts.config
+ rm hosts.config
+ i=0
+ while [ $i -le $(( N-1 )) ]; do
+   j=0
+   while [ $j -lt $(( node )) ]; do
+      num=$(( i * node + j ))
+      echo "$num 0.0.0.0 ${pubIPsVar[$i]} $(( $((200 * $num)) + 10000 ))" >> hosts.config
+      j=$(( j+1 ))
+   done
+   i=$(( i+1 ))
+ done
+
+# Clone config and keys to all remote AWS servers from github
+ i=0; while [ $i -le $(( N-1 )) ]; do
+ scp -o "StrictHostKeyChecking no" -i "/home/ubuntu/test_large.pem" /home/ubuntu/hosts.config ubuntu@${pubIPsVar[i]}:/home/ubuntu/kronos
+ scp -o "StrictHostKeyChecking no" -r -i "/home/ubuntu/test_large.pem" /home/ubuntu/keys ubuntu@${pubIPsVar[i]}:/home/ubuntu/kronos & 
+ i=$(( i+1 ))
+ done
 
  
 # Start Protocols at all remote AWS servers
  i=0
  while [ $i -le $(( N-1 )) ]; do   
-    ssh -i "/home/ubuntu/test_large.pem" ubuntu@${pubIPsVar[i]} "export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/lib; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib; cd kronos; nohup ./start.sh 8 4 1 1000 1 $(( i * node )) $node 20000 > server-$i.out" &   
- i=$(( i+1 )); 
+    ssh -o "StrictHostKeyChecking no" -i "/home/ubuntu/test_large.pem" ubuntu@${pubIPsVar[i]} "export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/lib; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib; cd kronos; nohup ./start.sh 8 4 1 1000 5 $(( i * node )) $node 20000 > server-$i.out" &   
+ i=$(( i+1 ))
  done
 

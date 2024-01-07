@@ -33,7 +33,7 @@ cd ..
 python3 -m pip install --upgrade pip
 sudo pip3 install gevent setuptools gevent numpy ecdsa pysocks gmpy2 zfec gipc pycrypto coincurve portalocker
 
-git clone -b speed-kronos-sqlite3 https://github.com/hidden-er/kronos.git 
-cd kronos
+#git clone -b speed-kronos-sqlite3 https://github.com/hidden-er/kronos.git 
+#cd kronos
 
 #Then you should replace hosts.config & start.sh and start to run.
