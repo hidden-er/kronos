@@ -76,7 +76,7 @@ class NetworkServer (Process):
     def _address_to_id(self, address: tuple):
         for i in range(self.N):
             if address and address[0] == self.addresses_list[i][0]:
-                return i + int((address[1] - 10000) / 200)
+                return i + int((address[1] - 10000) / 2500)
         #print(address)
         return -1
 
