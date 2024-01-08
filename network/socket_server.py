@@ -75,9 +75,10 @@ class NetworkServer (Process):
 
     def _address_to_id(self, address: tuple):
         for i in range(self.N):
-            if address[0] != '127.0.0.1' and address[0]!= '0.0.0.0' and address and address[0] == self.addresses_list[i][0] and address[1] == self.addresses_list[i][1]:
-                return i
-        return int((address[1] - 10000) / 200)
+            if address and address[0] == self.addresses_list[i][0]:
+                return i + int((address[1] - 10000) / 200)
+        #print(address)
+        return -1
 
     def _set_server_logger(self, id: int):
         logger = logging.getLogger("node-" + str(id))
