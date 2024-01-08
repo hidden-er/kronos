@@ -19,6 +19,19 @@ from ctypes import c_bool
 
 server_bft_mpq = mpQueue()
 
+def parse_shard_info(tx):
+    input_shards = re.findall(r'Input Shard: (\[.*?\])', tx)[0]
+    input_valids = re.findall(r'Input Valid: (\[.*?\])', tx)[0]
+    output_shard = re.findall(r'Output Shard: (\d+)', tx)[0]
+    output_valid = re.findall(r'Output Valid: (\d+)', tx)[0]
+
+    input_shards = eval(input_shards)
+    input_valids = eval(input_valids)
+    output_shard = int(output_shard)
+    output_valid = int(output_valid)
+
+    return input_shards, input_valids, output_shard, output_valid
+
 def read_pkl_file(file_path):
     with open(file_path, 'rb') as f:
         data = pickle.load(f)
@@ -132,9 +145,15 @@ if __name__ == '__main__':
     cur = conn.cursor()
     cur.execute('DROP TABLE IF EXISTS txlist')
     TXs = read_pkl_file('./TXs')
-    cur.execute('create table if not exists txlist (tx text primary key)') 
+    cur.execute('create table if not exists txlist (tx text primary key)')
+    tx_cnt = 0
     for tx in TXs:
-        cur.execute('insert into txlist (tx) values (?)', (tx,))
+        input_shards, input_valids, output_shard, output_valid = parse_shard_info(tx)
+        if len(input_shards) == 1 and input_shards[0] == output_shard and output_shard!=shard_id:
+            continue
+        else:
+            cur.execute('insert into txlist (tx) values (?)', (tx,))
+            tx_cnt += 1
     conn.commit()
 
     bft = DumboBFTNode(sid, shard_id, i, B, shard_num, N, f, conn, bft_from_server, bft_to_client, net_ready, stop, logg, K, mute=False, debug=False, bft_running=bft_running)
@@ -186,9 +205,9 @@ if __name__ == '__main__':
     cur.execute('SELECT * FROM txlist')
     TXs = cur.fetchall()
     logg.info('shard_id %d node %d stop; total time: %f; total TPS: %f; average latency: %f' % (shard_id, i, total_time, (
-                tx_num - len(TXs)) / total_time, latency))
+                tx_cnt - len(TXs)) / total_time, latency))
     print('shard_id %d node %d stop; total time: %f; total TPS: %f; average latency: %f' % (shard_id, i, total_time, (
-                tx_num - len(TXs)) / total_time, latency))
+                tx_cnt - len(TXs)) / total_time, latency))
 
     time.sleep(10)
     net_client.join()

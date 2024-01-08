@@ -81,7 +81,10 @@ class NetworkClient (Process):
         sock = socket.socket()
         if self.ip == '127.0.0.1' or self.ip == "0.0.0.0":
             try:
-                sock.bind((self.ip, self.port + j + random.randint(1, 100)))
+                num = (j + random.randint(1, 100)) % 200
+                if num == 0:
+                    num += 1
+                sock.bind((self.ip, self.port + num))
                 #sock.bind((self.ip, self.port + j + 1))
             except:
                 return False

@@ -16,7 +16,7 @@ pubIPsVar=([0]='43.198.182.13'
    j=0
    while [ $j -lt $(( node )) ]; do
       num=$(( i * node + j ))
-      echo "$num 0.0.0.0 ${pubIPsVar[$i]} $(( $((200 * $num)) + 10000 ))" >> hosts.config
+      echo "$num 0.0.0.0 ${pubIPsVar[$i]} $(( $((200 * $j)) + 10000 ))" >> hosts.config
       j=$(( j+1 ))
    done
    i=$(( i+1 ))

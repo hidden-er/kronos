@@ -275,7 +275,7 @@ class Dumbo():
 
         def handle_messages_break_recv():
             nonlocal break_count
-            while break_count<self.N * self.shard_num:
+            while break_count < self.shard_num:
             #while break_count < self.N:
                 (sender, msg) = break_recv.get()
                 break_count+=1
@@ -666,14 +666,18 @@ class Dumbo():
                 send(-3, ('LD', '', (txs, Sigma, rt, shard_branch, positions)))
                 #print("shard ", self.shard_id, " round ", self.epoch, " send LD message to other shards")
         #print("shard %d node %d gets return values" %(self.shard_id, self.id))
-        
-        send(-4, ('BREAK', '', ()))
+
+
+        if self.id == 1:
+                send(-4, ('BREAK', '', ()))
+
 
         while True:
-            if break_count == self.N * self.shard_num:
+            if break_count == self.shard_num:
             #if break_count == self.N:
                 break
             time.sleep(0)
+        
         #time.sleep(10)
 
         cur = self.TXs.cursor()
