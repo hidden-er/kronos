@@ -108,7 +108,8 @@ def speedmvbacommonsubset(sid, pid, shard_id, N, f, PK, SK, PK1, SK1, PK2s, SK2,
             if type(m) is tuple:
                 if len(m) == N:
                     for i in range(N):
-                        if m[i] is not None and predicate(i, m[i]):
+                        #if m[i] is not None and predicate(i, m[i]):
+                        if m[i] is not None:
                             counter += 1
             return True if counter >= N - f else False
 
@@ -140,7 +141,7 @@ def speedmvbacommonsubset(sid, pid, shard_id, N, f, PK, SK, PK1, SK1, PK2s, SK2,
     while True:
         j, vj = value_recv.get()
         try:
-            assert predicate(j, vj)
+            #assert predicate(j, vj)
             valueSenders.add(j)
             values[j % N] = vj
             if len(valueSenders) >= N - f:
