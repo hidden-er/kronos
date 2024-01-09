@@ -149,15 +149,15 @@ if __name__ == '__main__':
     cur.execute('DROP TABLE IF EXISTS txlist')
     TXs = read_pkl_file('./TXs')
     cur.execute('create table if not exists txlist (tx text primary key)')
-    tx_cnt = 0
+    '''tx_cnt = 0
     for tx in TXs:
         input_shards, input_valids, BFT_number, output_shard, output_valid = parse_shard_info(tx)
         if len(input_shards) == 1 and input_shards[0] == output_shard and output_shard!=shard_id:
             continue
         else:
             cur.execute('insert into txlist (tx) values (?)', (tx,))
-            tx_cnt += 1
-    '''tmp = 0
+            tx_cnt += 1'''
+    tmp = 0
     for j in range(tx_num):
         random.seed(time.time())
         if random.random() < 0.9:
@@ -165,7 +165,7 @@ if __name__ == '__main__':
         else:
             tx = TXs[tmp]
             tmp += 1
-        cur.execute('insert into txlist (tx) values (?)', (tx,))'''   
+        cur.execute('insert into txlist (tx) values (?)', (tx,)) 
     conn.commit()
 
     bft = DumboBFTNode(sid, shard_id, i, B, shard_num, N, f, conn, bft_from_server, bft_to_client, net_ready, stop, logg, K, mute=False, debug=False, bft_running=bft_running)
@@ -217,9 +217,9 @@ if __name__ == '__main__':
     cur.execute('SELECT * FROM txlist')
     TXs = cur.fetchall()
     logg.info('shard_id %d node %d stop; total time: %f; total TPS: %f; average latency: %f' % (shard_id, i, total_time, (
-                tx_cnt - len(TXs)) / total_time, latency))
+                tx_num - len(TXs)) / total_time, latency))
     print('shard_id %d node %d stop; total time: %f; total TPS: %f; average latency: %f' % (shard_id, i, total_time, (
-                tx_cnt - len(TXs)) / total_time, latency))
+                tx_num - len(TXs)) / total_time, latency))
 
     time.sleep(10)
     net_client.join()
