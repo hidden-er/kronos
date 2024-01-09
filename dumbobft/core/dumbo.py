@@ -277,7 +277,7 @@ class Dumbo():
 
         def handle_messages_break_recv():
             nonlocal break_count
-            while break_count<self.N * self.shard_num:
+            while break_count < self.shard_num:
             #while break_count < self.N:
                 (sender, msg) = break_recv.get()
                 break_count+=1
@@ -323,15 +323,15 @@ class Dumbo():
                 if receive:
                     # receive LD message from other shard
                     #print("[msg]:", type(msg), msg)
-                    tx_batch, proof, rt, shard_branch, positions = msg
+                    txs, proof, rt, shard_branch, positions = msg
                     '''print('[LD] Node %d in shard %d receive LD message from %d' % (self.id, self.shard_id,sender))'''
                     #print(tx_batch)        
                     # extract the transactions output shard of which is this shard
-                    txs = [tx for tx in json.loads(tx_batch) if parse_shard_info(tx)[3] == self.shard_id]
+                    #txs = [tx for tx in json.loads(tx_batch) if parse_shard_info(tx)[2] == self.shard_id]
 
                     #if do not exist tx that output shard == self.shard_id
-                    if len(txs) == 0:
-                        break
+                    # if len(txs) == 0:
+                    #     break
 
                     # construct merkle tree of these transactions
                     val = merkleTree(txs)[1]
@@ -430,7 +430,7 @@ class Dumbo():
                                     #TXs.remove(tx_pool)
                                     #TXs.append(tx_to_append)
                                     cur.execute('INSERT INTO txlist (tx) VALUES (?)', (tx_to_append,))
-                                    self.TXs.commit()                                   
+                                    self.TXs.commit()
                                     del self.pool[tx_pool]
 
                                 #print('[FINISH] after set value=1 TXs have %d txs' %len(TXs))
@@ -505,7 +505,7 @@ class Dumbo():
         gevent.spawn(handle_messages_break_recv)
 
         tx_invalid = []
-        #print(self.shard_id, 'before ', len(tx_to_send), tx_to_send)
+        #print(self.shard_id, 'before ', len(tx_to_send))
         for tx in tx_to_send:
             input_shards, input_valids, _, _, _ = parse_shard_info(tx)
             if self.shard_id in input_shards and input_valids[input_shards.index(self.shard_id)] == 0:
@@ -513,7 +513,7 @@ class Dumbo():
         if tx_invalid:
             send(-1, ('CL_M', '', (tx_invalid, ecdsa_sign(self.sSK2, json.dumps(tx_invalid)))))
         tx_to_send = [tx for tx in tx_to_send if tx not in tx_invalid]
-        #print(self.shard_id, 'after ', len(tx_to_send), tx_to_send)
+        #print(self.shard_id, 'after ', len(tx_to_send))
 
         pb_threads = [None] * N
 
@@ -647,7 +647,7 @@ class Dumbo():
             end = time.time()
             self.logger.info('ACS Block Delay at Node %d: ' % self.id + str(end - self.s_time))
             self.logger.info('Current Block\'s TPS at Node %d: ' % self.id + str(tx_cnt / (end - self.s_time)))
-        
+
         #TXs = read_pkl_file(self.TXs)
         cur = self.TXs.cursor()
         for tx in block:
@@ -682,18 +682,31 @@ class Dumbo():
 
         # broadcast LD message except itself
         # (TODO: Sent according to the shards involved)
-        if self.id == 0:
-                send(-3, ('LD', '', (txs, Sigma, rt, shard_branch, positions)))
+        # if self.id == 0:
+        #         send(-3, ('LD', '', (txs, Sigma, rt, shard_branch, positions)))
                 #print("shard ", self.shard_id, " round ", self.epoch, " send LD message to other shards")
-        #print("shard %d node %d gets return values" %(self.shard_id, self.id))
+        grouped_txs = defaultdict(list)
+        txs_list = json.loads(txs)
+        for tx in txs_list:
+            _, _, _, output_shard, _ = parse_shard_info(tx)
+            grouped_txs[output_shard].append(tx)
         
-        send(-4, ('BREAK', '', ()))
+        if self.id == 0:
+            for shard_id in grouped_txs:
+                for i in range(N):
+                    send(i + shard_id * N, ('LD', '', (grouped_txs[shard_id], Sigma, rt, shard_branch, positions)))
+
+
+        if self.id == 1:
+                send(-4, ('BREAK', '', ()))
+
 
         while True:
-            if break_count == self.N * self.shard_num:
+            if break_count == self.shard_num:
             #if break_count == self.N:
                 break
             time.sleep(0)
+        
         #time.sleep(10)
 
         cur = self.TXs.cursor()

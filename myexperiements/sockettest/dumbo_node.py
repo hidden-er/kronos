@@ -111,7 +111,6 @@ class DumboBFTNode(Dumbo):
             TXs = cur.fetchall()
             self.logger.info('node %d in shard %d before extract batch has %d TXS' % (self.id, self.shard_id, len(TXs)))
             print('node %d in shard %d before extract batch has %d TXS' % (self.id, self.shard_id, len(TXs)))
-
             k = 0
             for tx in TXs:
                 cur.execute('DELETE FROM txlist WHERE tx=?', (tx[0],))
