@@ -453,15 +453,23 @@ class Dumbo():
                                     assert ecdsa_vrfy(self.sPK2s[sender % self.N], json.dumps(txs), sig)
                                     # print("CL_M signature verified!")
                                 except AssertionError:
-                                    print("CL_M ecdsa signature failed!")
+                                    #print("CL_M ecdsa signature failed!")
+                                    if self.logger is not None:
+                                        self.logger.info("CL_M ecdsa signature failed!")
                                     continue
 
                                 clm_signers.add(sender)
                                 clm_signs[sender] = sig
 
-                                if len(clm_signers) == self.N - self.f:
+                                if len(clm_signers) == self.N - self.f and self.id == 0:
                                     Sigma = tuple(clm_signs.items())
-                                    send(-3, ('CL', '', (txs, Sigma)))
+                                    grouped_invalid_txs = defaultdict(list)
+                                    for tx in txs:
+                                        _, _, output_shard, _ = parse_shard_info(tx)
+                                        grouped_invalid_txs[output_shard].append(tx)
+                                    for shard in grouped_invalid_txs:
+                                        for i in range(self.N):
+                                            send(i + shard * self.N, ('CL', '', (txs, Sigma)))
                     except Exception as e:
                         print(e)
                         continue
@@ -470,19 +478,21 @@ class Dumbo():
             while True:
                     try:
                         (sender, msg) = cl_recv.get()
-                        txs, Sigma = msg
+                        invalid_txs, Sigma = msg
                         #print('[CL] Node %d in shard %d receive CL message from %d ' % (
                         #self.id, self.shard_id, sender))
                         try:
                             for item in Sigma:
-                                (sender, sig_p) = item
-                                assert ecdsa_vrfy(self.sPK2s[sender % self.N], json.dumps(txs), sig_p)
+                                (_sender, sig_p) = item
+                                assert ecdsa_vrfy(self.sPK2s[_sender % self.N], json.dumps(invalid_txs), sig_p)
                                 # print("CL signature verified!")
                         except AssertionError:
-                            print("CL ecdsa signature failed!")
+                            #print("CL ecdsa signature failed!")
+                            if self.logger is not None:
+                                self.logger.info("CL ecdsa signature failed!")
                             continue
 
-                        for tx in txs:
+                        for tx in invalid_txs:
                             input_shards, _, output_shard, _ = parse_shard_info(tx)
                             if self.shard_id in input_shards:
                                 '''TODO: 本分片作为输入分片 已对该交易进行了BFT共识 需要构造BACK-TX 将该输入退还至原地址''' 
