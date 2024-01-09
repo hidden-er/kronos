@@ -16,8 +16,24 @@ from network.socket_server import NetworkServer
 from network.socket_client import NetworkClient
 from multiprocessing import Value as mpValue, Queue as mpQueue
 from ctypes import c_bool
+from dumbobft.core.tx_generator import inter_tx_generator
 
 server_bft_mpq = mpQueue()
+
+def parse_shard_info(tx):
+    input_shards = re.findall(r'Input Shard: (\[.*?\])', tx)[0]
+    input_valids = re.findall(r'Input Valid: (\[.*?\])', tx)[0]
+    BFT_number = re.findall(r'BFT Number: (\[.*?\])', tx)[0]
+    output_shard = re.findall(r'Output Shard: (\d+)', tx)[0]
+    output_valid = re.findall(r'Output Valid: (\d+)', tx)[0]
+
+    input_shards = eval(input_shards)
+    input_valids = eval(input_valids)
+    BFT_number = eval(BFT_number)
+    output_shard = int(output_shard)
+    output_valid = int(output_valid)
+
+    return input_shards, input_valids, BFT_number, output_shard, output_valid
 
 def read_pkl_file(file_path):
     with open(file_path, 'rb') as f:
@@ -51,6 +67,8 @@ if __name__ == '__main__':
                         help='identifier of node', type=int)
     parser.add_argument('--shard_id', metavar='shard_id', required=True,
                         help='identifier of shard', type=int)
+    parser.add_argument('--tx_num', metavar='tx_num', required=True,
+                        help='number of transactions', type=int)
     parser.add_argument('--shard_num', metavar='shard_num', required=True,
                         help='number of shards', type=int)
     parser.add_argument('--N', metavar='N', required=True,
@@ -59,8 +77,10 @@ if __name__ == '__main__':
                         help='number of faulties', type=int)
     parser.add_argument('--B', metavar='B', required=True,
                         help='size of batch', type=int)
-    parser.add_argument('--K', metavar='K', required=True,
-                        help='rounds to execute', type=int)
+    parser.add_argument('--K', metavar='K', required=False,
+                        help='rounds to execute', type=int, default=1)
+    parser.add_argument('--R', metavar='R', required=True,
+                        help='number of rounds', type=int)
     parser.add_argument('--S', metavar='S', required=False,
                         help='slots to execute', type=int, default=50)
     parser.add_argument('--M', metavar='M', required=False,
@@ -69,8 +89,8 @@ if __name__ == '__main__':
                         help='whether to debug mode', type=bool, default=False)
     args = parser.parse_args()
 
-    sid, i, shard_id, shard_num, N, f, B, K, S, M, D = (
-        args.sid, args.id, args.shard_id, args.shard_num, args.N, args.f, args.B, args.K, args.S, args.M, args.D)
+    sid, i, shard_id, tx_num, shard_num, N, f, B, K, R, S, M, D = (
+        args.sid, args.id, args.shard_id, args.tx_num, args.shard_num, args.N, args.f, args.B, args.K, args.R, args.S, args.M, args.D)
     rnd = random.Random(sid)
 
 
@@ -128,11 +148,26 @@ if __name__ == '__main__':
     cur = conn.cursor()
     cur.execute('DROP TABLE IF EXISTS txlist')
     TXs = read_pkl_file('./TXs')
-    cur.execute('create table if not exists txlist (tx text primary key)') 
+    cur.execute('create table if not exists txlist (tx text primary key)')
+    '''tx_cnt = 0
     for tx in TXs:
-        cur.execute('insert into txlist (tx) values (?)', (tx,))
+        input_shards, input_valids, BFT_number, output_shard, output_valid = parse_shard_info(tx)
+        if len(input_shards) == 1 and input_shards[0] == output_shard and output_shard!=shard_id:
+            continue
+        else:
+            cur.execute('insert into txlist (tx) values (?)', (tx,))
+            tx_cnt += 1'''
+    tmp = 0
+    for j in range(tx_num):
+        random.seed(time.time())
+        if random.random() < 0.9:
+            tx = inter_tx_generator(250, shard_id)
+        else:
+            tx = TXs[tmp]
+            tmp += 1
+        cur.execute('insert into txlist (tx) values (?)', (tx,)) 
     conn.commit()
-    
+
     bft = DumboBFTNode(sid, shard_id, i, B, shard_num, N, f, conn, bft_from_server, bft_to_client, net_ready, stop, logg, K, mute=False, debug=False, bft_running=bft_running)
     #bft = DumboBFTNode(sid, shard_id, i, B, shard_num, N, f, f'/home/lyn/BDT/TXs_file/TXs', bft_from_server,bft_to_client, net_ready, stop, K, mute=False, debug=False, bft_running=bft_running)
 
@@ -149,7 +184,7 @@ if __name__ == '__main__':
 
 
     start = time.time()
-    for j in range(10):
+    for j in range(R):
         logg.info('shard_id %d, node %d BFT round %d' % (shard_id, i, j))
         print('shard_id %d, node %d BFT round %d' % (shard_id, i, j))
         #print(f"shard_id {shard_id}, node {i} BFT round {j}")
@@ -178,13 +213,13 @@ if __name__ == '__main__':
 
     num = 0.9
     latency = num * block_delay + (1 - num) * (2 * block_delay + round_delay)
-
+    
     cur.execute('SELECT * FROM txlist')
     TXs = cur.fetchall()
     logg.info('shard_id %d node %d stop; total time: %f; total TPS: %f; average latency: %f' % (shard_id, i, total_time, (
-                20000 - len(TXs)) / total_time, latency))
+                tx_num - len(TXs)) / total_time, latency))
     print('shard_id %d node %d stop; total time: %f; total TPS: %f; average latency: %f' % (shard_id, i, total_time, (
-                20000 - len(TXs)) / total_time, latency))
+                tx_num - len(TXs)) / total_time, latency))
 
     time.sleep(10)
     net_client.join()

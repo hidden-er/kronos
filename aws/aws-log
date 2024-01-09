@@ -1,0 +1,20 @@
+#!/bin/bash
+# the number of remove AWS servers
+N=2
+
+# the number of nodes on each server
+node=16
+
+# public IPs --- This is the public IPs of AWS servers
+pubIPsVar=([0]='43.198.182.13'
+  [1]='43.198.224.244')
+ 
+# Download logs from all remote AWS servers to your local PC
+i=0
+while [ $i -le $(( N-1 )) ]
+do
+  scp -o "StrictHostKeyChecking no" -r -i "/home/ubuntu/test_large.pem" ubuntu@${pubIPsVar[i]}:/home/ubuntu/kronos/log /home/ubuntu/total-log/log-$i
+  scp -o "StrictHostKeyChecking no" -i "/home/ubuntu/test_large.pem" ubuntu@${pubIPsVar[i]}:/home/ubuntu/kronos/server-$i.out /home/ubuntu/total-log &
+  i=$(( i+1 ))
+done
+ 
