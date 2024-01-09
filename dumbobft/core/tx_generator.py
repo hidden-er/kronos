@@ -25,11 +25,28 @@ def tx_generator(size=250, shard_num=4, chars=string.ascii_uppercase + string.di
 
     return f'<Dummy TX: {random_string}{shard_info} >'
 
-def tx_generator_test():
-    s=pickle.load(open('TXs','rb'))
-    print(len(s))
-    for i in s:
-        print(i)
+def inter_tx_generator(size, shard_id, chars=string.ascii_uppercase + string.digits):
+    random.seed(time.time())
+
+    shard_info = f", Input Shard: {str([shard_id])}, Input Valid: [1], Output Shard: {shard_id}, Output Valid: {1}"
+    random_string = ''.join(random.choice(chars) for _ in range(size - 10))
+
+    return f'<Dummy TX: {random_string}{shard_info} >'
+
+def cross_tx_generator(size, shard_num, chars=string.ascii_uppercase + string.digits):
+    random.seed(time.time())
+
+    if shard_num >= 4:
+        input_shard_num = random.randint(1, 3)
+    else:
+        input_shard_num = 1
+    input_shards = sorted(random.sample(range(0, shard_num), input_shard_num))
+    input_valid = random.choices([0, 1],weights=[20, 80],k=input_shard_num)
+    output_shard = random.choice([shard for shard in range(shard_num) if shard not in input_shards])
+    shard_info = f", Input Shard: {str(input_shards)}, Input Valid: {str(input_valid)}, Output Shard: {output_shard}, Output Valid: {0}"
+    random_string = ''.join(random.choice(chars) for _ in range(size - 10))
+
+    return f'<Dummy TX: {random_string}{shard_info} >'
 
 
 if __name__ == '__main__':
@@ -45,7 +62,7 @@ if __name__ == '__main__':
     N = args.tx_num
     txs=[]
     for i in range(N):
-        tx = tx_generator(250, args.shard_num)
+        tx = cross_tx_generator(250, args.shard_num)
         txs.append(tx)
         #print(tx)
         #time.sleep(1)
