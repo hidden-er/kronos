@@ -62,8 +62,8 @@ if __name__ == '__main__':
     N = args.tx_num
     txs=[]
     for i in range(N):
-        #tx = cross_tx_generator(250, args.shard_num)
-        tx = tx_generator(250, args.shard_num)
+        tx = cross_tx_generator(250, args.shard_num)
+        #tx = tx_generator(250, args.shard_num)
         txs.append(tx)
         #print(tx)
         #time.sleep(1)
