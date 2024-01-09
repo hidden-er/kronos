@@ -669,7 +669,7 @@ class Dumbo():
                 #print(BFT_number_before, BFT_number)
                 tx_to_append = tx.replace(f'BFT Number: {BFT_number_before}', f'BFT Number: {BFT_number}')
                 #TXs.append(tx_to_append)
-                cur.execute('INSERT INTO txlist (tx) VALUES (?)', (tx_to_append,))
+                cur.execute('REPLACE INTO txlist (tx) VALUES (?)', (tx_to_append,))
                 self.TXs.commit()                
                 #print("[REPLACE] after ", tx_to_append)
         #write_pkl_file(TXs, self.TXs)
