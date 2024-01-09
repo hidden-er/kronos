@@ -457,7 +457,9 @@ class Dumbo():
                                     assert ecdsa_vrfy(self.sPK2s[sender % self.N], json.dumps(txs), sig)
                                     # print("CL_M signature verified!")
                                 except AssertionError:
-                                    print("CL_M ecdsa signature failed!")
+                                    #print("CL_M ecdsa signature failed!")
+                                    if self.logger is not None:
+                                        self.logger.info("CL_M ecdsa signature failed!")
                                     continue
 
                                 clm_signers.add(sender)
@@ -489,7 +491,9 @@ class Dumbo():
                                 assert ecdsa_vrfy(self.sPK2s[sender % self.N], json.dumps(txs), sig_p)
                                 # print("CL signature verified!")
                         except AssertionError:
-                            print("CL ecdsa signature failed!")
+                            #print("CL ecdsa signature failed!")
+                            if self.logger is not None:
+                                self.logger.info("CL ecdsa signature failed!")
                             continue
 
                         for tx in txs:
