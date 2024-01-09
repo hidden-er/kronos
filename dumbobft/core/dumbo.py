@@ -463,9 +463,15 @@ class Dumbo():
                                 clm_signers.add(sender)
                                 clm_signs[sender] = sig
 
-                                if len(clm_signers) == self.N - self.f:
+                                if len(clm_signers) == self.N - self.f and self.id == 0:
                                     Sigma = tuple(clm_signs.items())
-                                    send(-3, ('CL', '', (txs, Sigma)))
+                                    grouped_invalid_txs = defaultdict(list)
+                                    for tx in txs:
+                                        _, _, _, output_shard, _ = parse_shard_info(tx)
+                                        grouped_invalid_txs[output_shard].append(tx)
+                                    for shard in grouped_invalid_txs:
+                                        for i in range(self.N):
+                                            send(i + shard * self.N, ('CL', '', (txs, Sigma)))
                     except Exception as e:
                         print(e)
                         continue
