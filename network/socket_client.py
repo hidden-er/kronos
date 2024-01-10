@@ -85,7 +85,7 @@ class NetworkClient (Process):
                 if num == 0:
                     num += 1
                 sock.bind((self.ip, self.port + num))
-                print(j, self.port + num)
+                #print(j, self.port + num)
                 #sock.bind((self.ip, self.port + j + 1))
             except:
                 return False
@@ -95,6 +95,7 @@ class NetworkClient (Process):
             #print("_connect,",sock.getsockname(),sock.getpeername())
             return True
         except Exception as e1:
+            sock.close()
             return False
 
 
