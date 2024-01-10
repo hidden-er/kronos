@@ -1,13 +1,15 @@
 #!/bin/bash
 # the number of remove AWS servers
-N=2
+N=4
 
 # the number of nodes on each server
 node=16
 
 # public IPs --- This is the public IPs of AWS servers
-pubIPsVar=([0]='43.198.182.13'
-  [1]='43.198.224.244')
+pubIPsVar=([0]='54.198.78.194'
+  [1]='54.162.246.216'
+  [2]='16.162.161.200'
+  [3]='18.167.51.240')
 
 # Generate hosts.config
  rm hosts.config
@@ -33,7 +35,7 @@ pubIPsVar=([0]='43.198.182.13'
 # Start Protocols at all remote AWS servers
  i=0
  while [ $i -le $(( N-1 )) ]; do   
-    ssh -o "StrictHostKeyChecking no" -i "/home/ubuntu/test_large.pem" ubuntu@${pubIPsVar[i]} "export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/lib; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib; cd kronos; nohup ./start.sh 8 4 1 1000 5 $(( i * node )) $node 20000 > server-$i.out" &   
+    ssh -o "StrictHostKeyChecking no" -i "/home/ubuntu/test_large.pem" ubuntu@${pubIPsVar[i]} "export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/lib; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib; cd kronos; nohup ./start.sh 16 4 1 2000 5 $(( i * node )) $node 20000 > server-$i.out" &   
  i=$(( i+1 ))
  done
 
