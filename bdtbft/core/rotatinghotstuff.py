@@ -24,16 +24,6 @@ from bdtbft.exceptions import UnknownTagError
 from crypto.ecdsa.ecdsa import ecdsa_sign, ecdsa_vrfy, PublicKey
 
 
-def read_pkl_file(file_path):
-    with open(file_path, 'rb') as f:
-        data = pickle.load(f)
-    return data
-
-def write_pkl_file(data, file_path):
-    with open(file_path, 'wb') as f:
-        pickle.dump(data, f)
-
-
 def parse_shard_info(tx):
     input_shards = re.findall(r'Input Shard: (\[.*?\])', tx)[0]
     input_valids = re.findall(r'Input Valid: (\[.*?\])', tx)[0]
@@ -262,8 +252,6 @@ class RotatingLeaderHotstuff():
         :param send:
         :param recv:
         """
-        if self.logger != None:
-            self.logger.info('Node enters epoch %d' % e)
 
         sid = self.sid
         pid = self.id
@@ -310,17 +298,7 @@ class RotatingLeaderHotstuff():
         )
         recv_t = gevent.spawn(broadcast_receiver_loop, recv, recv_queues)
 
-
-        fast_blocks = Queue(1)  # The blocks that receives
-
-        latest_delivered_block = None
         latest_notarized_block = None
-        latest_notarization = None
-
-        newview_counter = 0
-
-        viewchange_counter = 0
-        viewchange_max_slot = 0
 
         def handle_messages_break_recv():
             nonlocal break_count
@@ -356,6 +334,7 @@ class RotatingLeaderHotstuff():
                             Sigma = tuple(votes.items())
                             decides.put_nowait((tx_batch, rt, Sigma))
                             break
+
         def handle_messages_ld_recv():
             ld_cnt = 0
             while True:
@@ -477,7 +456,6 @@ class RotatingLeaderHotstuff():
                                     self.TXs.commit()
                                     del self.pool[tx_pool]
 
-                                '''有些轮进不来这里，也不知道为啥'''
                                 #print(self.id, self.shard_id)
                                 #write_pkl_file(TXs, self.TXs)
 
@@ -559,7 +537,6 @@ class RotatingLeaderHotstuff():
         gevent.spawn(handle_message_cl_recv)
         gevent.spawn(handle_messages_break_recv)
 
-        start = time.time()
         tx_invalid = []
         #print(self.shard_id, 'before ', len(tx_to_send), tx_to_send)
         for tx in tx_to_send:
@@ -577,15 +554,9 @@ class RotatingLeaderHotstuff():
                 send(k, ('FAST', '', o))
 
             def fastpath_output(o):
-                nonlocal latest_delivered_block, latest_notarized_block, latest_notarization
-                if not fast_blocks.empty():
-                    latest_delivered_block = fast_blocks.get()
-                    #tx_cnt = str(latest_delivered_block).count("Dummy TX")
-                    #self.txcnt += tx_cnt
-                    #if self.logger is not None:
-                    #    self.logger.info('Node %d Delivers Fastpath Block in Epoch %d at Slot %d with having %d TXs' % (self.id, self.epoch, latest_delivered_block[1], tx_cnt))
-                latest_notarized_block, latest_notarization = o
-                fast_blocks.put(o)
+                nonlocal latest_notarized_block
+
+                latest_notarized_block = o
 
             fast_thread = gevent.spawn(hsfastpath, epoch_id, self.shard_id, pid, N, f, leader,
                                    tx_to_send, fastpath_output,
@@ -595,122 +566,22 @@ class RotatingLeaderHotstuff():
 
             return fast_thread
 
-
-        def handle_viewchange_msg():
-            nonlocal viewchange_counter, viewchange_max_slot
-
-            while True:
-                j, (notarized_block_header_j, notarized_block_Sig_j) = viewchange_recv.get()
-                if notarized_block_Sig_j is not None:
-                    (_, slot_num, Sig_p, _) = notarized_block_header_j
-                    notarized_block_hash_j = hash(notarized_block_header_j)
-                    try:
-                        assert len(notarized_block_Sig_j) >= N-f
-                        for item in notarized_block_Sig_j:
-                            # print(Sigma_p)
-                            (sender, sig_p) = item
-                            assert ecdsa_vrfy(self.sPK2s[sender % N], notarized_block_hash_j, sig_p)
-                    except AssertionError:
-                        if self.logger is not None: self.logger.info("False view change with invalid notarization")
-                        continue  # go to next iteration without counting ViewChange Counter
-                else:
-                    assert notarized_block_header_j == None
-                    slot_num = 0
-                gevent.sleep(0)
-
-                viewchange_counter += 1
-                if slot_num > viewchange_max_slot:
-                    viewchange_max_slot = slot_num
-
-                if viewchange_counter >= N - f:
-                    next_leader = (e+1) % N
-                    max_slot_sig = ecdsa_sign(self.sSK2, json.dumps(viewchange_max_slot))
-                    send_1(next_leader + self.shard_id * N, ('NEW_VIEW', "", (e+1, viewchange_max_slot, max_slot_sig, notarized_block_header_j)))
-                    break
-
         # Start the fast path
 
         fast_thread = _setup_fastpath(leader)
-
-        #if self.logger is not None:
-        #    self.logger.info("epoch %d with fast path leader %d" % (e, leader))
-
-
-        #if e > 0 and leader == pid:
-        #    wait_newview_msg()
-
-        # Setup handler of view change requests
-        #vc_thread = gevent.spawn(handle_viewchange_msg)
-
-
-        # Wait either view_change handler done or fast_path done
-        vc_ready = gevent.event.Event()
-        vc_ready.clear()
-
-        vc_start = gevent.event.Event()
-        vc_start.clear()
-
-        def wait_for_fastpath():
-            fast_thread.get()
-            vc_start.set()
-            if self.logger != None:
-                self.logger.info('Fastpath of epoch %d completed' % e)
-
-        '''def wait_for_vc_msg():
-            vc_thread.get()
-            vc_ready.set()
-            if self.logger != None:
-                self.logger.info('VC messages of epoch %d collected' % e)'''
-
-        gevent.spawn(wait_for_fastpath)
-        vc_start.wait()
-
-        # Get the returned notarization of the fast path, which contains the combined Signature for the tip of chain
-        notarization = latest_notarization
-        #print('notarization ', notarization)
-        try:
-            if notarization is not None:
-                notarized_block = latest_notarized_block
-                #print("notarized_block ", notarized_block)
-                assert notarized_block is not None
-                #payload_digest = hash(notarized_block[3])
-                self.tx_batch = notarized_block[3]
-                #print('self.tx_batch ', self.tx_batch)
-                #notarized_block_header = (notarized_block[0], notarized_block[1], notarized_block[2], payload_digest)
-                notarized_block_hash, notarized_block_raw_Sig, (epoch_txcnt, weighted_delay) = notarization
-                self.txdelay = (self.txcnt * self.txdelay + epoch_txcnt * weighted_delay) / (self.txcnt + epoch_txcnt)
-                #self.txcnt += epoch_txcnt
-                #assert hash(notarized_block_header) == notarized_block_hash
-                #o = (notarized_block_header, notarized_block_raw_Sig)
-                #send(-1, ('VIEW_CHANGE', '', o))
-            else:
-                #notarized_block_header = None
-                #o = (notarized_block_header, None)
-                #send(-1, ('VIEW_CHANGE', '', o))
-                pass
-        except AssertionError:
-            print("Problematic notarization....")
-
-        #gevent.spawn(wait_for_vc_msg)
-        #vc_ready.wait()
+        fast_thread.get()
 
         voters = set()
         votes = dict()
-
-        #decides: used to store the final decision
-        #decide_sent: used to symbolize whether the final decision is sent
-        #print("round: ",self.epoch)
         decides = Queue(1)
 
-        #receive message from 'vote_recv' queue.
-        #each message includes 'sender' and 'msg'
         gevent.spawn(handle_messages_vote_recv)
         gevent.spawn(handle_messages_ld_recv)
         gevent.spawn(handle_messages_sign_recv)
 
 
-        tx_batch = self.tx_batch
-        #print(type(tx_batch), len(tx_batch))
+        tx_batch = latest_notarized_block[3]
+        # tx_batch = json.dumps(tx_to_send)
         if self.logger != None:
             tx_cnt = str(json.loads(tx_batch)).count("Dummy TX")
             self.txcnt += tx_cnt
@@ -735,20 +606,6 @@ class RotatingLeaderHotstuff():
         #print(merkletree,shard_branch)
         rt = merkletree[1]
 
-        '''#delete txs inside shard
-        TXs = read_pkl_file(self.TXs)
-        tx_batch = json.loads(txs)
-        #print(len(tx_batch))
-        #print('node %d in shard %d before BFT has %d TXS' %(self.id, self.shard_id, len(TXs)))
-        for tx in tx_batch:
-            #print(tx)
-            if tx in TXs:
-                TXs.remove(tx)
-        #print('node %d in shard %d after BFT has %d TXS' %(self.id, self.shard_id, len(TXs)))
-        write_pkl_file(TXs, self.TXs)'''
-
-
-        #print(self.shard_id,self.id,rt,shard_branch)
 
         # broadcast LD message except itself
         grouped_txs = defaultdict(list)
