@@ -39,9 +39,6 @@ def hsfastpath(sid, shard_id, pid, N, f, leader, tx_to_send, output_notraized_bl
     :return tuple: False to represent timeout, and True to represent success
     """
 
-    if logger is not None:
-        logger.info("Entering fast path")
-
     TIMEOUT = Tout
     SLOTS_NUM = Snum
     BATCH_SIZE = Bsize
@@ -60,22 +57,6 @@ def hsfastpath(sid, shard_id, pid, N, f, leader, tx_to_send, output_notraized_bl
 
     decide_sent = [False] * (SLOTS_NUM + 3)  # The first item of the list is not used
 
-    msg_noncritical_signal = Event()
-    msg_noncritical_signal.set()
-
-    slot_noncritical_signal = Event()
-    slot_noncritical_signal.set()
-
-    s_times = [0] * (SLOTS_NUM + 3)
-    e_times = [0] * (SLOTS_NUM + 3)
-    txcnt =  [0] * (SLOTS_NUM + 3)
-    delay =  [0] * (SLOTS_NUM + 3)
-
-    epoch_txcnt = 0
-    weighted_delay = 0
-
-
-
     def handle_messages():
         nonlocal leader, hash_prev, pending_block, notraized_block, voters, votes, slot_cur
 
@@ -85,12 +66,6 @@ def hsfastpath(sid, shard_id, pid, N, f, leader, tx_to_send, output_notraized_bl
 
             (sender, msg) = recv()
             #logger.info("receving a fast path msg " + str((sender, msg)))
-
-            ########################
-            # Enter critical block #
-            ########################
-
-            msg_noncritical_signal.clear()
 
             if msg[0] == 'VOTE' and pid == leader and len(voters[slot_cur]) < N - f:
 
@@ -110,7 +85,7 @@ def hsfastpath(sid, shard_id, pid, N, f, leader, tx_to_send, output_notraized_bl
                         #    if logger is not None: logger.info("Late vote from node %d! Not needed anymore..." % sender)
                         #else:
                         #    if logger is not None: logger.info("Too early vote from node %d! I do not decide earlier block yet..." % sender)
-                        msg_noncritical_signal.set()
+                        # msg_noncritical_signal.set()
                         continue
 
                     try:
@@ -118,7 +93,7 @@ def hsfastpath(sid, shard_id, pid, N, f, leader, tx_to_send, output_notraized_bl
                     except AssertionError:
                         if logger is not None:
                             logger.info("False vote from node %d though within the same slot!" % sender)
-                        msg_noncritical_signal.set()
+                        # msg_noncritical_signal.set()
                         continue
 
                     try:
@@ -126,7 +101,7 @@ def hsfastpath(sid, shard_id, pid, N, f, leader, tx_to_send, output_notraized_bl
                     except AssertionError:
                         if logger is not None:
                             logger.info("Vote signature failed!")
-                        msg_noncritical_signal.set()
+                        # msg_noncritical_signal.set()
                         continue
 
 
@@ -153,7 +128,7 @@ def hsfastpath(sid, shard_id, pid, N, f, leader, tx_to_send, output_notraized_bl
                     if logger is not None:
                         # logger.info("Out of synchronization")
                         pass
-                    msg_noncritical_signal.set()
+                    # msg_noncritical_signal.set()
                     continue
 
                 try:
@@ -161,7 +136,7 @@ def hsfastpath(sid, shard_id, pid, N, f, leader, tx_to_send, output_notraized_bl
                 except AssertionError:
                     if logger is not None:
                         logger.info("No enough ecdsa signatures!")
-                    msg_noncritical_signal.set()
+                    # msg_noncritical_signal.set()
                     continue
 
                 try:
@@ -172,31 +147,17 @@ def hsfastpath(sid, shard_id, pid, N, f, leader, tx_to_send, output_notraized_bl
                 except AssertionError:
                     if logger is not None:
                         logger.info("ecdsa signature failed!")
-                    msg_noncritical_signal.set()
+                    # msg_noncritical_signal.set()
                     continue
 
                 decides[slot_cur].put_nowait((hash_p, Sigma_p, batches))
-
-
-            msg_noncritical_signal.set()
-
-            ########################
-            # Leave critical block #
-            ########################
 
     """
     One slot
     """
 
     def one_slot():
-        nonlocal shard_id, N, slot_cur, hash_prev, weighted_delay, epoch_txcnt
-        #print('3')
-
-        '''if logger is not None:
-            logger.info("Entering slot %d" % slot_cur)'''
-        #print("Entering slot %d" % slot_cur)
-
-        s_times[slot_cur] = time.time()
+        nonlocal shard_id, N, slot_cur, hash_prev
 
         try:
             sig_prev = ecdsa_sign(SK2, hash_prev)
@@ -210,62 +171,14 @@ def hsfastpath(sid, shard_id, pid, N, f, leader, tx_to_send, output_notraized_bl
         (h_p, Sigma_p, batches) = decides[slot_cur].get()  # Block to wait for the voted block
 
 
-        ########################
-        # Enter critical block #
-        ########################
-
-        slot_noncritical_signal.clear()
-        msg_noncritical_signal.wait()
-        '''
-        if pending_block is not None:
-
-            if notraized_block is not None:
-                fixed_block = notraized_block
-                assert fixed_block[1] + 2 == slot_cur
-
-            notraized_block = (pending_block[0], pending_block[1], pending_block[2], pending_block[4])
-            #print("Fastpath notraized_block ", notraized_block)
-            assert notraized_block[1] + 1 == slot_cur
-
-            if fixed_block is not None:
-                e_times[fixed_block[1]] = time.time()
-                delay[fixed_block[1]] = e_times[fixed_block[1]] - s_times[fixed_block[1]]
-                txcnt[fixed_block[1]] = str(fixed_block).count("Dummy TX")
-                weighted_delay = (epoch_txcnt * weighted_delay + txcnt[fixed_block[1]] * delay[fixed_block[1]]) / (epoch_txcnt + txcnt[fixed_block[1]])
-                epoch_txcnt += txcnt[fixed_block[1]]
-
-                if logger is not None:
-                    logger.info('Fast block at Node %d for Epoch %s and Slot %d has delay and TXs: %s, %d' % (pid, sid, fixed_block[1], str(delay[fixed_block[1]]), txcnt[fixed_block[1]]))
-
-
-            if output_notraized_block is not None:
-                output_notraized_block((notraized_block, (h_p, Sigma_p, (epoch_txcnt, weighted_delay))))'''
-
         pending_block = (sid, slot_cur, h_p, Sigma_p, batches)
         pending_block_header = (sid, slot_cur, h_p, hash(batches))
         hash_prev = hash(pending_block_header)
 
         notraized_block = (pending_block[0], pending_block[1], pending_block[2], pending_block[4])
 
-        e_times[notraized_block[1]] = time.time()
-        delay[notraized_block[1]] = e_times[notraized_block[1]] - s_times[notraized_block[1]]
-        txcnt[notraized_block[1]] = str(notraized_block).count("Dummy TX")
-        weighted_delay = (epoch_txcnt * weighted_delay + txcnt[notraized_block[1]] * delay[notraized_block[1]]) / (epoch_txcnt + txcnt[notraized_block[1]])
-        epoch_txcnt += txcnt[notraized_block[1]]
+        output_notraized_block(notraized_block)
 
-        output_notraized_block((notraized_block, (h_p, Sigma_p, (epoch_txcnt, weighted_delay))))
-
-        '''if logger is not None:
-            logger.info("Leaving slot %d" % slot_cur)'''
-
-        slot_cur = slot_cur + 1
-        slot_noncritical_signal.set()
-
-
-
-        ########################
-        # Leave critical block #
-        ########################
 
     """
     Execute the slots
@@ -274,53 +187,4 @@ def hsfastpath(sid, shard_id, pid, N, f, leader, tx_to_send, output_notraized_bl
     recv_thread = gevent.spawn(handle_messages)
     #gevent.sleep(0)
 
-    while slot_cur <= SLOTS_NUM:
-
-        #if logger is not None:
-        #    logger.info("Enter fastpath's slot %d out of all %d slots" % (slot_cur, SLOTS_NUM))
-
-        #print('0')
-
-        #if logger is not None:
-        #    logger.info("entering fastpath slot %d ..." % slot_cur)
-
-
-        #print('1')
-
-        msg_noncritical_signal.wait()
-        slot_noncritical_signal.wait()
-
-        #print('2')
-
-        #timeout = Timeout(TIMEOUT, False)
-        #timeout.start()
-
-        '''timeout = Timeout(TIMEOUT)
-        #print(TIMEOUT)
-        timeout.start()
-        try:
-            with gevent.Timeout(TIMEOUT, False):
-            #with Timeout(TIMEOUT):
-            #gevent.spawn(one_slot).join(timeout=Timeout)
-                #if omitfast is False:
-                one_slot()
-                #else:
-                #    while True:
-                #        gevent.sleep(0.01)
-        except Timeout as e:
-            msg_noncritical_signal.wait()
-            slot_noncritical_signal.wait()
-            gevent.killall([recv_thread])
-            print("node " + str(pid) + " error: " + str(e))
-            if logger is not None:
-                logger.info("Fastpath Timeout!")
-            break
-        timeout.cancel()
-        timeout.close()'''
-        one_slot()
-
-
-    if notraized_block != None:
-        return pending_block[2], pending_block[3], (epoch_txcnt, weighted_delay)  # represents fast_path successes
-    else:
-        return None
+    one_slot()
