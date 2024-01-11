@@ -1,37 +1,23 @@
-import sqlite3
-from gevent import monkey;
-
-monkey.patch_all(thread=False)
-
-import time
-import random
+import json
 import logging
 import os
 import pickle
 import re
+import sqlite3
+from gevent import monkey
 
+from bdtbft.core.tx_generator import inter_tx_generator; monkey.patch_all(thread=False)
+
+import time
+import random
+import traceback
+from typing import List, Callable
 from gevent import Greenlet
-from myexperiements.sockettest.dumbo_node import DumboBFTNode
+from myexperiements.sockettest.rotatinghotstuff_node import RotatingHotstuffBFTNode
 from network.socket_server import NetworkServer
 from network.socket_client import NetworkClient
 from multiprocessing import Value as mpValue, Queue as mpQueue
 from ctypes import c_bool
-from dumbobft.core.tx_generator import inter_tx_generator
-
-server_bft_mpq = mpQueue()
-
-def parse_shard_info(tx):
-    input_shards = re.findall(r'Input Shard: (\[.*?\])', tx)[0]
-    input_valids = re.findall(r'Input Valid: (\[.*?\])', tx)[0]
-    output_shard = re.findall(r'Output Shard: (\d+)', tx)[0]
-    output_valid = re.findall(r'Output Valid: (\d+)', tx)[0]
-
-    input_shards = eval(input_shards)
-    input_valids = eval(input_valids)
-    output_shard = int(output_shard)
-    output_valid = int(output_valid)
-
-    return input_shards, input_valids, output_shard, output_valid
 
 def read_pkl_file(file_path):
     with open(file_path, 'rb') as f:
@@ -53,11 +39,8 @@ def set_consensus_log(id: int):
 
 if __name__ == '__main__':
 
-    # ================================================================================
-    # Set the meaning of the command line arguments and initialize them
-    # ================================================================================
-
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--sid', metavar='sid', required=True,
                         help='identifier of node', type=str)
@@ -81,21 +64,43 @@ if __name__ == '__main__':
                         help='number of rounds', type=int)
     parser.add_argument('--S', metavar='S', required=False,
                         help='slots to execute', type=int, default=50)
+    parser.add_argument('--T', metavar='T', required=False,
+                        help='fast path timeout', type=float, default=1)
+    parser.add_argument('--P', metavar='P', required=False,
+                        help='protocol to execute', type=str, default="mule")
     parser.add_argument('--M', metavar='M', required=False,
                         help='whether to mute a third of nodes', type=bool, default=False)
+    parser.add_argument('--F', metavar='F', required=False,
+                        help='batch size of fallback path', type=int, default=100)
     parser.add_argument('--D', metavar='D', required=False,
                         help='whether to debug mode', type=bool, default=False)
+    parser.add_argument('--O', metavar='O', required=False,
+                        help='whether to omit the fast path', type=bool, default=False)
     args = parser.parse_args()
 
-    sid, i, shard_id, tx_num, shard_num, N, f, B, K, R, S, M, D = (
-        args.sid, args.id, args.shard_id, args.tx_num, args.shard_num, args.N, args.f, args.B, args.K, args.R, args.S, args.M, args.D)
+    # Some parameters
+    sid = args.sid
+    i = args.id
+    shard_id = args.shard_id
+    tx_num = args.tx_num
+    shard_num = args.shard_num
+    N = args.N
+    f = args.f
+    B = args.B
+    K = args.K
+    R = args.R
+    S = args.S
+    T = args.T
+    P = args.P
+    M = args.M
+    F = args.F
+    D = args.D
+    O = args.O
+
+    # Random generator
     rnd = random.Random(sid)
 
-
-    # ================================================================================
-    # Initialize sockets configration of nodes
-    # ================================================================================
-
+    # Nodes list
     addresses = [None] * shard_num * N
     with open('hosts.config', 'r') as hosts:
         for line in hosts:
@@ -110,35 +115,29 @@ if __name__ == '__main__':
     assert all([node is not None for node in addresses])
     #print("hosts.config is correctly read")
 
-    # ================================================================================
-    # Initialize network of the node
-    # ================================================================================
+    # bft_from_server, server_to_bft = mpPipe(duplex=True)
+    # client_from_bft, bft_to_client = mpPipe(duplex=True)
 
     client_bft_mpq = mpQueue()
-    server_bft_mpq = mpQueue()
-
-    #lambda functions used to communicate
-    client_from_bft = lambda: client_bft_mpq.get(timeout=0.1)
+    #client_from_bft = client_bft_mpq.get
+    client_from_bft = lambda: client_bft_mpq.get(timeout=0.00001)
     bft_to_client = client_bft_mpq.put_nowait
-    bft_from_server = lambda: server_bft_mpq.get(timeout=0.1)
+
+    server_bft_mpq = mpQueue()
+    #bft_from_server = server_bft_mpq.get
+    bft_from_server = lambda: server_bft_mpq.get(timeout=0.00001)
     server_to_bft = server_bft_mpq.put_nowait
 
-    #variables used to share state between processes
     client_ready = mpValue(c_bool, False)
     server_ready = mpValue(c_bool, False)
     net_ready = mpValue(c_bool, False)
     stop = mpValue(c_bool, False)
     bft_running = mpValue(c_bool, False)  # True = good network; False = bad network
 
-    #print(my_address[1],my_address[0])
     net_server = NetworkServer(my_address[1], my_address[0], i, addresses, server_to_bft, server_ready, stop)
     net_client = NetworkClient(my_address[1], my_address[0], i, shard_id, N, addresses, client_from_bft, client_ready, stop,
-                               bft_running, dynamic=True)
-
-
-    # ================================================================================
-    # Initialize node and join it to network
-    # ================================================================================
+                               bft_running, dynamic=False)
+    
     logg = set_consensus_log(i + shard_id * N)
 
     id = shard_id * N + i
@@ -146,15 +145,8 @@ if __name__ == '__main__':
     cur = conn.cursor()
     cur.execute('DROP TABLE IF EXISTS txlist')
     TXs = read_pkl_file('./TXs')
-    cur.execute('create table if not exists txlist (tx text primary key)')
-    '''tx_cnt = 0
-    for tx in TXs:
-        input_shards, input_valids, output_shard, output_valid = parse_shard_info(tx)
-        if len(input_shards) == 1 and input_shards[0] == output_shard and output_shard!=shard_id:
-            continue
-        else:
-            cur.execute('insert into txlist (tx) values (?)', (tx,))
-            tx_cnt += 1'''
+    cur.execute('create table if not exists txlist (tx text primary key)') 
+    
     tmp = 0
     for j in range(tx_num):
         random.seed(time.time())
@@ -166,9 +158,9 @@ if __name__ == '__main__':
         cur.execute('insert into txlist (tx) values (?)', (tx,))
     conn.commit()
 
-    bft = DumboBFTNode(sid, shard_id, i, B, shard_num, N, f, conn, bft_from_server, bft_to_client, net_ready, stop, logg, K, mute=False, debug=False, bft_running=bft_running)
-    #bft = DumboBFTNode(sid, shard_id, i, B, shard_num, N, f, f'/home/lyn/BDT/TXs_file/TXs', bft_from_server,bft_to_client, net_ready, stop, K, mute=False, debug=False, bft_running=bft_running)
 
+    bft = RotatingHotstuffBFTNode(sid, shard_id, i, S, T, B, F, shard_num, N, f, conn, bft_from_server, bft_to_client, net_ready, stop, logg, K, mute=False, omitfast=False, bft_running=bft_running)
+    #print(O)
     net_server.start()
     net_client.start()
 
@@ -180,12 +172,10 @@ if __name__ == '__main__':
         net_ready.value = True
     print("network ready!!!")
 
-
     start = time.time()
     for j in range(R):
         logg.info('shard_id %d, node %d BFT round %d' % (shard_id, i, j))
-        print('shard_id %d, node %d BFT round %d' % (shard_id, i, j))
-        #print(f"shard_id {shard_id}, node {i} BFT round {j}")
+        print(f"shard {shard_id}, node {i} BFT round {j}")
         bft_thread = Greenlet(bft.run)
         bft_thread.start()
         bft_thread.join()
@@ -193,7 +183,7 @@ if __name__ == '__main__':
     time.sleep(2)
     with stop.get_lock():
         stop.value = True
-        #print("shard_id ", shard_id, "node ",i," stop; total time:",time.time()-start - 2)
+        #print("shard ", shard_id, "node ",i," stop; total time: ", time.time()-start)
         total_time = time.time()-start - 2
 
 
@@ -201,7 +191,7 @@ if __name__ == '__main__':
         content = f.read()
     round_pattern = r"breaks in (\d+\.\d+) seconds"
     round= re.findall(round_pattern,content)
-    block_pattern = r"ACS Block Delay at Node \d+: (\d+\.\d+)"
+    block_pattern = r"Hotstuff Block Delay at Node \d+: (\d+\.\d+)"
     block = re.findall(block_pattern,content)
 
     round_numbers = [float(num) for num in round]
@@ -211,17 +201,15 @@ if __name__ == '__main__':
 
     num = 0.9
     latency = num * block_delay + (1 - num) * (block_delay + round_delay)
-    
+
     cur.execute('SELECT * FROM txlist')
     TXs = cur.fetchall()
     logg.info('shard_id %d node %d stop; total time: %f; total TPS: %f; average latency: %f' % (shard_id, i, total_time, (
                 tx_num - len(TXs)) / total_time, latency))
     print('shard_id %d node %d stop; total time: %f; total TPS: %f; average latency: %f' % (shard_id, i, total_time, (
                 tx_num - len(TXs)) / total_time, latency))
-
     time.sleep(10)
     net_client.join()
     net_client.terminate()
     net_server.join()
     net_server.terminate()
-
