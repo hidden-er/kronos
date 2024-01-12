@@ -52,10 +52,11 @@ class BroadcastTag(Enum):
     SIGN = 'SIGN'
     CL_M = 'CL_M'
     CL = 'CL'
-    BREAK = 'BREAK'
+    BREAK_BETWEEN = 'BREAK_BETWEEN'
+    BREAK_INSIDE = 'BREAK_INSIDE'
 
 BroadcastReceiverQueues = namedtuple(
-    'BroadcastReceiverQueues', ('ACS_PRBC', 'ACS_VACS', 'TPKE', 'VOTE', 'LD', 'SIGN', 'CL_M', 'CL', 'BREAK'))
+    'BroadcastReceiverQueues', ('ACS_PRBC', 'ACS_VACS', 'TPKE', 'VOTE', 'LD', 'SIGN', 'CL_M', 'CL', 'BREAK_BETWEEN', 'BREAK_INSIDE'))
 
 
 def broadcast_receiver_loop(recv_func, recv_queues):
@@ -233,7 +234,8 @@ class Dumbo():
         shard_id = self.shard_id
         N = self.N
         f = self.f
-        break_count = 0
+        break_bt_count = 0
+        break_is_count = 0
 
         pb_recvs = [Queue() for _ in range(N)]
         vacs_recv = Queue()
@@ -243,7 +245,8 @@ class Dumbo():
         sign_recv = Queue()
         clm_recv = Queue()
         cl_recv = Queue()
-        break_recv = Queue()
+        break_bt_recv = Queue()
+        break_is_recv = Queue()
 
         my_pb_input = Queue(1)
 
@@ -263,7 +266,8 @@ class Dumbo():
             SIGN=sign_recv,
             CL_M=clm_recv,
             CL=cl_recv,
-            BREAK=break_recv
+            BREAK_BETWEEN=break_bt_recv,
+            BREAK_INSIDE=break_is_recv
         )
 
         bc_recv_loop_thread = Greenlet(broadcast_receiver_loop, recv, recv_queues)
@@ -273,13 +277,21 @@ class Dumbo():
         #if self.logger != None:
         #    self.logger.info('Commit tx at Node %d:' % self.id + str(tx_to_send))
 
-        def handle_messages_break_recv():
-            nonlocal break_count
-            while break_count < self.shard_num:
+        def handle_messages_break_bt_recv():
+            nonlocal break_bt_count
+            while break_bt_count < self.shard_num:
             #while break_count < self.N:
-                (sender, msg) = break_recv.get()
-                break_count+=1
+                (sender, msg) = break_bt_recv.get()
+                break_bt_count+=1
                 #print(f"shard {self.shard_id} node {self.id} break_count {break_count}, received from {sender}")
+
+        def handle_messages_break_is_recv():
+            nonlocal break_is_count
+            while break_is_count < self.N:
+            #while break_count < self.N:
+                (sender, msg) = break_is_recv.get()
+                break_is_count+=1
+                #print(f"shard {self.shard_id} node {self.id} break_count {break_is_count}, received from {sender}")
 
         def handle_messages_vote_recv():
             nonlocal voters, votes, decides
@@ -508,7 +520,8 @@ class Dumbo():
 
         gevent.spawn(handle_message_clm_recv)
         gevent.spawn(handle_message_cl_recv)
-        gevent.spawn(handle_messages_break_recv)
+        gevent.spawn(handle_messages_break_bt_recv)
+        gevent.spawn(handle_messages_break_is_recv)
 
         tx_invalid = []
         #print(self.shard_id, 'before ', len(tx_to_send))
@@ -688,11 +701,11 @@ class Dumbo():
 
 
         if self.id == 1:
-                send(-4, ('BREAK', '', ()))
-
+                send(-4, ('BREAK_BETWEEN', '', ()))
+        send(-1, ('BREAK_INSIDE', '', ()))
 
         while True:
-            if break_count == self.shard_num:
+            if break_bt_count == self.shard_num and break_is_count == self.N:
             #if break_count == self.N:
                 break
             time.sleep(0)
