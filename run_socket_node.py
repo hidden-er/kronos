@@ -220,6 +220,8 @@ if __name__ == '__main__':
                 tx_num - len(TXs)) / total_time, latency))
     print('shard_id %d node %d stop; total time: %f; total TPS: %f; average latency: %f' % (shard_id, i, total_time, (
                 tx_num - len(TXs)) / total_time, latency))
+    logg.info('shard_id %d node %d stop; block_delay: %f ; round_delay: %f ; time-between-shards: %f' % (shard_id, i, block_delay, round_delay, round_delay - block_delay))
+    print('shard_id %d node %d stop; block_delay: %f ; round_delay: %f ; time-between-shards: %f' % (shard_id, i, block_delay, round_delay, round_delay - block_delay))
 
     time.sleep(10)
     net_client.join()

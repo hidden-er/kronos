@@ -19,7 +19,7 @@ def tx_generator(size=250, shard_num=4, chars=string.ascii_uppercase + string.di
         input_shards = sorted(random.sample(range(0, shard_num), input_shard_num))
         input_valid = random.choices([0, 1],weights=[20, 80],k=input_shard_num)
         output_shard = random.choice([shard for shard in range(shard_num) if shard not in input_shards])
-        shard_info = f", Input Shard: {str(input_shards)}, Input Valid: {str(input_valid)}, Output Shard: {output_shard}, Output Valid: {0}"
+        shard_info = f", Input Shard: {str(input_shards)}, Input Valid: {str(input_valid)}, BFT Number: [1], Output Shard: {output_shard}, Output Valid: {0}"
 
     random_string = ''.join(random.choice(chars) for _ in range(size - 10))
 
@@ -28,7 +28,7 @@ def tx_generator(size=250, shard_num=4, chars=string.ascii_uppercase + string.di
 def inter_tx_generator(size, shard_id, chars=string.ascii_uppercase + string.digits):
     random.seed(time.time())
 
-    shard_info = f", Input Shard: {str([shard_id])}, Input Valid: [1], Output Shard: {shard_id}, Output Valid: {1}"
+    shard_info = f", Input Shard: {str([shard_id])}, Input Valid: [1], BFT Number: [1], Output Shard: {shard_id}, Output Valid: {1}"
     random_string = ''.join(random.choice(chars) for _ in range(size - 10))
 
     return f'<Dummy TX: {random_string}{shard_info} >'
@@ -40,10 +40,11 @@ def cross_tx_generator(size, shard_num, chars=string.ascii_uppercase + string.di
         input_shard_num = random.randint(1, 3)
     else:
         input_shard_num = 1
+    BFT_number = [0] * input_shard_num
     input_shards = sorted(random.sample(range(0, shard_num), input_shard_num))
     input_valid = random.choices([0, 1],weights=[20, 80],k=input_shard_num)
     output_shard = random.choice([shard for shard in range(shard_num) if shard not in input_shards])
-    shard_info = f", Input Shard: {str(input_shards)}, Input Valid: {str(input_valid)}, Output Shard: {output_shard}, Output Valid: {0}"
+    shard_info = f", Input Shard: {str(input_shards)}, Input Valid: {str(input_valid)}, BFT Number: {str(BFT_number)}, Output Shard: {output_shard}, Output Valid: {0}"
     random_string = ''.join(random.choice(chars) for _ in range(size - 10))
 
     return f'<Dummy TX: {random_string}{shard_info} >'

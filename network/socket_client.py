@@ -95,6 +95,7 @@ class NetworkClient (Process):
             #print("_connect,",sock.getsockname(),sock.getpeername())
             return True
         except Exception as e1:
+            sock.close()
             return False
 
 
