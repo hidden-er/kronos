@@ -158,7 +158,7 @@ if __name__ == '__main__':
     tmp = 0
     for j in range(tx_num):
         random.seed(time.time())
-        if random.random() < 0.9:
+        if random.random() < 0.1:
             tx = inter_tx_generator(250, shard_id)
         else:
             tx = TXs[tmp]
@@ -209,7 +209,7 @@ if __name__ == '__main__':
     round_delay = sum(round_numbers) / len(round_numbers)
     block_delay = sum(block_numbers) / len(block_numbers)
 
-    num = 0.9
+    num = 0.1
     latency = num * block_delay + (1 - num) * (block_delay + round_delay)
     
     cur.execute('SELECT * FROM txlist')
@@ -218,6 +218,8 @@ if __name__ == '__main__':
                 tx_num - len(TXs)) / total_time, latency))
     print('shard_id %d node %d stop; total time: %f; total TPS: %f; average latency: %f' % (shard_id, i, total_time, (
                 tx_num - len(TXs)) / total_time, latency))
+    logg.info('shard_id %d node %d stop; block_delay: %f ; round_delay: %f ; time-between-shards: %f' % (shard_id, i, block_delay,round_delay,round_delay-block_delay))
+    print('shard_id %d node %d stop; block_delay: %f ; round_delay: %f ; time-between-shards: %f' % (shard_id, i, block_delay, round_delay, round_delay - block_delay))
 
     time.sleep(10)
     net_client.join()
