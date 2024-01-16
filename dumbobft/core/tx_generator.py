@@ -17,7 +17,7 @@ def tx_generator(size=250, shard_num=4, chars=string.ascii_uppercase + string.di
         else:
             input_shard_num = 1
         input_shards = sorted(random.sample(range(0, shard_num), input_shard_num))
-        input_valid = random.choices([0, 1],weights=[2, 98],k=input_shard_num)
+        input_valid = random.choices([0, 1],weights=[20, 80],k=input_shard_num)
         output_shard = random.choice([shard for shard in range(shard_num) if shard not in input_shards])
         shard_info = f", Input Shard: {str(input_shards)}, Input Valid: {str(input_valid)}, Output Shard: {output_shard}, Output Valid: {0}"
 
@@ -41,7 +41,7 @@ def cross_tx_generator(size, shard_num, chars=string.ascii_uppercase + string.di
     else:
         input_shard_num = 1
     input_shards = sorted(random.sample(range(0, shard_num), input_shard_num))
-    input_valid = random.choices([0, 1],weights=[2, 98],k=input_shard_num)
+    input_valid = random.choices([0, 1],weights=[20, 80],k=input_shard_num)
     output_shard = random.choice([shard for shard in range(shard_num) if shard not in input_shards])
     shard_info = f", Input Shard: {str(input_shards)}, Input Valid: {str(input_valid)}, Output Shard: {output_shard}, Output Valid: {0}"
     random_string = ''.join(random.choice(chars) for _ in range(size - 10))

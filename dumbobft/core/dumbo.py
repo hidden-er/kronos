@@ -213,12 +213,6 @@ class Dumbo():
 
         self.epoch += 1
 
-        if self.logger != None:
-            self.e_time = time.time()
-            self.logger.info("node %d breaks in %f seconds with total delivered Txs %d" % (self.id, self.e_time-self.s_time, self.txcnt))
-        else:
-            print("node %d breaks" % self.id)
-
     #
     def _run_round(self, r, tx_to_send, send, recv, epoch):
         """Run one protocol round.
@@ -659,6 +653,10 @@ class Dumbo():
             for tx in decoded_batch:
                 block.add(tx)
 
+        tx_batch = json.dumps(list(block))
+        merkle_tree = group_and_build_merkle_tree(tx_batch)
+        rt = merkle_tree[0][1]
+
         if self.logger != None:
             tx_cnt = str(list(block)).count("Dummy TX")
             self.txcnt += tx_cnt
@@ -666,10 +664,6 @@ class Dumbo():
             end = time.time()
             self.logger.info('ACS Block Delay at Node %d: ' % self.id + str(end - self.s_time))
             self.logger.info('Current Block\'s TPS at Node %d: ' % self.id + str(tx_cnt / (end - self.s_time)))
-
-        tx_batch = json.dumps(list(block))
-        merkle_tree = group_and_build_merkle_tree(tx_batch)
-        rt = merkle_tree[0][1]
 
         try:
             sig_prev = ecdsa_sign(self.sSK2, rt)
@@ -699,6 +693,11 @@ class Dumbo():
                 for i in range(N):
                     send(i + shard_id * N, ('LD', '', (grouped_txs[shard_id], Sigma, rt, shard_branch, positions)))
 
+        if self.logger != None:
+            self.e_time = time.time()
+            self.logger.info("node %d breaks in %f seconds with total delivered Txs %d" % (self.id, self.e_time-self.s_time, self.txcnt))
+        else:
+            print("node %d breaks" % self.id)
 
         if self.id == 1:
                 send(-4, ('BREAK_BETWEEN', '', ()))
