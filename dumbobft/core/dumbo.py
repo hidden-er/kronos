@@ -699,12 +699,13 @@ class Dumbo():
         else:
             print("node %d breaks" % self.id)
 
-        if self.id == 1:
-                send(-4, ('BREAK_BETWEEN', '', ()))
         send(-1, ('BREAK_INSIDE', '', ()))
+        if self.id == 0:
+                send(-4, ('BREAK_BETWEEN', '', ()))
+        
 
         while True:
-            if break_bt_count == self.shard_num and break_is_count == self.N:
+            if break_bt_count >= self.shard_num and break_is_count == self.N:
             #if break_count == self.N:
                 break
             time.sleep(0)
