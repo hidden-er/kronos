@@ -107,13 +107,10 @@ class RotatingHotstuffBFTNode (RotatingLeaderHotstuff):
             for tx in TXs:
                 cur.execute('DELETE FROM txlist WHERE tx=?', (tx[0],))
 
-                input_shards, input_valids, output_shard, output_valid = parse_shard_info(tx[0])
-                if self.shard_id in input_shards or (
-                        self.shard_id == output_shard and output_valid == 1):
-                    RotatingLeaderHotstuff.submit_tx(self, tx[0])
-                    k += 1
-                    if k == self.FAST_BATCH_SIZE:
-                        break                   
+                RotatingLeaderHotstuff.submit_tx(self, tx[0])
+                k += 1
+                if k == self.FAST_BATCH_SIZE:
+                    break
             
             self.TXs.commit()
             cur.execute('SELECT * FROM txlist')

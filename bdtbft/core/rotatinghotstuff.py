@@ -228,12 +228,6 @@ class RotatingLeaderHotstuff():
         #if self.logger != None:
         #    self.logger.info('Backlog Buffer at Node %d:' % self.id + str(self.transaction_buffer))
 
-        self.e_time = time.time()
-        if self.logger != None:
-            self.logger.info("node %d breaks in %f seconds with total delivered Txs %d and average delay %f" % (self.id, self.e_time-self.s_time, self.txcnt, self.txdelay) )
-        else:
-            print("node %d breaks in %f seconds with total delivered Txs %d and average delay %f" % (self.id, self.e_time-self.s_time, self.txcnt, self.txdelay))
-       
         self._stop_recv_loop = True
         self._recv_thread.kill()
         self.round += 1  # Increment the round
@@ -595,6 +589,10 @@ class RotatingLeaderHotstuff():
 
         tx_batch = latest_notarized_block[3]
         # tx_batch = json.dumps(tx_to_send)
+
+        merkle_tree = group_and_build_merkle_tree(tx_batch)
+        rt = merkle_tree[0][1]
+
         if self.logger != None:
             tx_cnt = str(json.loads(tx_batch)).count("Dummy TX")
             self.txcnt += tx_cnt
@@ -602,10 +600,6 @@ class RotatingLeaderHotstuff():
             end = time.time()
             self.logger.info('Hotstuff Block Delay at Node %d: ' % self.id + str(end - self.s_time))
             self.logger.info('Current Block\'s TPS at Node %d: ' % self.id + str(tx_cnt / (end - self.s_time)))
-
-
-        merkle_tree = group_and_build_merkle_tree(tx_batch)
-        rt = merkle_tree[0][1]
 
         try:
             sig_prev = ecdsa_sign(self.sSK2, rt)
@@ -631,6 +625,14 @@ class RotatingLeaderHotstuff():
             for shard_id in grouped_txs:
                 for i in range(N):
                     send(i + shard_id * N, ('LD', '', (grouped_txs[shard_id], Sigma, rt, shard_branch, positions)))
+
+        self.e_time = time.time()
+        if self.logger != None:
+            self.logger.info("node %d breaks in %f seconds with total delivered Txs %d and average delay %f" % (
+            self.id, self.e_time - self.s_time, self.txcnt, self.txdelay))
+        else:
+            print("node %d breaks in %f seconds with total delivered Txs %d and average delay %f" % (
+            self.id, self.e_time - self.s_time, self.txcnt, self.txdelay))
 
         if self.id == 1:
                 send(-4, ('BREAK_BETWEEN', '', ()))

@@ -6,7 +6,7 @@ echo "start.sh <shard_num> <N> <f> <B> <R> <start_num> <num> <tx_num>"
 
 rm ./TXs
 touch TXs
-python3 ./bdtbft/core/tx_generator.py --shard_num $1 --tx_num $8
+python3 ./bdtbft/core/tx_generator.py --shard_num $1 --tx_num $9
 #python3 run_trusted_key_gen.py --N $2 --f $3
 
 
