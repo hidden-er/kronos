@@ -167,7 +167,7 @@ if __name__ == '__main__':
                 input_shards, input_valids, output_shard, output_valid = parse_shard_info(TXs[tmp])
                 tmp += 1
 
-            tx = TXs[tmp]
+            tx = TXs[tmp-1]
         cur.execute('insert into txlist (tx) values (?)', (tx,))
     conn.commit()
 
