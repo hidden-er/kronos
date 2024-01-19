@@ -115,13 +115,10 @@ class DumboBFTNode(Dumbo):
             for tx in TXs:
                 cur.execute('DELETE FROM txlist WHERE tx=?', (tx[0],))
 
-                input_shards, input_valids, BFT_number, output_shard, output_valid = parse_shard_info(tx[0])
-                if self.shard_id in input_shards or (
-                        self.shard_id == output_shard and output_valid == 1):
-                    Dumbo.submit_tx(self, tx[0])
-                    k += 1
-                    if k == self.B:
-                        break
+                Dumbo.submit_tx(self, tx[0])
+                k += 1
+                if k == self.B:
+                    break
 
             self.TXs.commit()
             cur.execute('SELECT * FROM txlist')

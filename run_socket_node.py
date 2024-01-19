@@ -163,8 +163,13 @@ if __name__ == '__main__':
         if random.random() < 0.9:
             tx = inter_tx_generator(250, shard_id)
         else:
-            tx = TXs[tmp]
+            input_shards, input_valids, BFT_number, output_shard, output_valid = parse_shard_info(TXs[tmp])
             tmp += 1
+            while shard_id not in input_shards and (shard_id != output_shard or output_valid != 1):
+                input_shards, input_valids, BFT_number, output_shard, output_valid = parse_shard_info(TXs[tmp])
+                tmp += 1
+
+            tx = TXs[tmp-1]
         cur.execute('insert into txlist (tx) values (?)', (tx,)) 
     conn.commit()
 
