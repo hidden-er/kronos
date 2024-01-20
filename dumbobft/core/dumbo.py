@@ -723,7 +723,7 @@ class Dumbo():
             print("node %d breaks" % self.id)
 
         send(-1, ('BREAK_INSIDE', '', ()))
-        if self.id == 0:
+        if self.id == 1:
                 send(-4, ('BREAK_BETWEEN', '', ()))
         
 
