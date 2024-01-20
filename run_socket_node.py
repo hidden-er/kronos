@@ -197,11 +197,11 @@ if __name__ == '__main__':
         bft_thread.start()
         bft_thread.join()
 
-    time.sleep(2)
+    time.sleep(5)
     with stop.get_lock():
         stop.value = True
         #print("shard_id ", shard_id, "node ",i," stop; total time:",time.time()-start - 2)
-        total_time = time.time()-start - 2
+        total_time = time.time()-start - 5
 
 
     with open(f'log/consensus-node-{i + shard_id * N}.log','r') as f:
