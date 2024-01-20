@@ -158,7 +158,7 @@ if __name__ == '__main__':
     tmp = 0
     for j in range(tx_num):
         random.seed(time.time())
-        if random.random() < 0.1:
+        if random.random() < 0.9:
             tx = inter_tx_generator(250, shard_id)
         else:
             input_shards, input_valids, output_shard, output_valid = parse_shard_info(TXs[tmp])
@@ -195,11 +195,11 @@ if __name__ == '__main__':
         bft_thread.start()
         bft_thread.join()
 
-    time.sleep(2)
+    time.sleep(5)
     with stop.get_lock():
         stop.value = True
         #print("shard_id ", shard_id, "node ",i," stop; total time:",time.time()-start - 2)
-        total_time = time.time()-start - 2
+        total_time = time.time()-start - 5
 
 
     with open(f'log/consensus-node-{i + shard_id * N}.log','r') as f:
@@ -214,7 +214,7 @@ if __name__ == '__main__':
     round_delay = sum(round_numbers) / len(round_numbers)
     block_delay = sum(block_numbers) / len(block_numbers)
 
-    num = 0.1
+    num = 0.9
     latency = num * block_delay + (1 - num) * (block_delay + round_delay)
     
     cur.execute('SELECT * FROM txlist')
