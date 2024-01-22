@@ -88,6 +88,7 @@ class NetworkClient (Process):
                 #print(j, self.port + num)
                 #sock.bind((self.ip, self.port + j + 1))
             except:
+                sock.close()
                 return False
         try:
             sock.connect(self.addresses_list[j])
