@@ -197,7 +197,7 @@ if __name__ == '__main__':
         bft_thread.start()
         bft_thread.join()
 
-    time.sleep(60)
+    time.sleep(15)
     with stop.get_lock():
         stop.value = True
         #print("shard_id ", shard_id, "node ",i," stop; total time:",time.time()-start - 2)
