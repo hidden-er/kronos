@@ -201,7 +201,7 @@ if __name__ == '__main__':
     with stop.get_lock():
         stop.value = True
         #print("shard_id ", shard_id, "node ",i," stop; total time:",time.time()-start - 2)
-        total_time = time.time()-start - 60
+        total_time = time.time()-start - 15
 
 
     with open(f'log/consensus-node-{i + shard_id * N}.log','r') as f:
