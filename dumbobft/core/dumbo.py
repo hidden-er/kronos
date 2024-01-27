@@ -273,7 +273,7 @@ class Dumbo():
 
         def handle_messages_break_bt_recv():
             nonlocal break_bt_count
-            while break_bt_count < self.shard_num:
+            while break_bt_count < self.shard_num - 80:
             #while break_count < self.N:
                 (sender, msg) = break_bt_recv.get()
                 break_bt_count+=1
@@ -705,7 +705,7 @@ class Dumbo():
         
 
         while True:
-            if break_bt_count >= self.shard_num and break_is_count == self.N:
+            if break_bt_count >= self.shard_num - 80 and break_is_count == self.N:
             #if break_count == self.N:
                 break
             time.sleep(0)
