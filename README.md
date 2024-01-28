@@ -15,11 +15,17 @@ but actually it only uses Dumbo module and related Honeybadger part.
     
 2. A quick start to run kronos can be:
    ```
-   ./start.sh 3 4 1 1000 5 0 12 20000
+   ./start.sh 3 4 1 1000 5 0 12 5000 20000
    ```
    
-   It means protocol has 3 shards , each shard has 4 nodes(include 1 fake node); batch 1000, round 5.
-
+      It means:
+   
+   ​	 	The protocol has 3 shards , each shard has 4 nodes(include 1 fake node); batch 1000, round 5；
+   
+   ​		The server itself run 12 nodes, start from node 0;
+   
+   ​		each nodes' TXs pool has 5000Txs, and the cross-shard part of them is chosen from a pre-generated 20000TXs list.
+   
 3. If you would like to test the code among AWS cloud servers (with Ubuntu 18.84 LTS). You can follow the commands inside /aws to remotely start the protocols at all servers. An example to conduct the WAN tests from your PC side terminal can be:
    ```
    sudo ./aws/aws-pre
