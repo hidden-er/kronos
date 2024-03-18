@@ -79,16 +79,6 @@ class NetworkClient (Process):
 
     def _connect(self, j: int):
         sock = socket.socket()
-        if self.ip == '127.0.0.1' or self.ip == "0.0.0.0":
-            try:
-                num = (j + random.randint(1, 2500)) % 2500
-                if num == 0:
-                    num += 1
-                sock.bind((self.ip, self.port + num))
-                #print(j, self.port + num)
-                #sock.bind((self.ip, self.port + j + 1))
-            except:
-                return False
         try:
             sock.connect(self.addresses_list[j])
             self.socks[j] = sock
