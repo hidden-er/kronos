@@ -10,6 +10,10 @@ import os
 import pickle
 import re
 
+from datetime import datetime
+import pytz
+
+
 from gevent import Greenlet
 from myexperiements.sockettest.dumbo_node import DumboBFTNode
 from network.socket_server import NetworkServer
@@ -17,6 +21,13 @@ from network.socket_client import NetworkClient
 from multiprocessing import Value as mpValue, Queue as mpQueue
 from ctypes import c_bool
 from dumbobft.core.tx_generator import inter_tx_generator
+
+from collections import namedtuple
+from enum import Enum
+from honeybadgerbft.exceptions import UnknownTagError
+import traceback
+from gevent.queue import Queue
+import gevent
 
 server_bft_mpq = mpQueue()
 
@@ -177,19 +188,48 @@ if __name__ == '__main__':
     net_server.start()
     net_client.start()
 
-    while not client_ready.value or not server_ready.value:
-        time.sleep(1)
-        print("waiting for network ready...")
 
+    while not client_ready.value or not server_ready.value:
+        time.sleep(0.2)
+        #print("waiting for self-node ready...")
+
+    print('shard_id %d, node %d ready' % (shard_id, i))
+
+    eastern = pytz.timezone('Asia/Shanghai')
+    eastern_time = datetime.now(eastern)
+    timestamp = eastern_time.timestamp() + 15
+    print('shard_id %d, node %d expected-start-time(global): %s %f' % (shard_id, i, datetime.fromtimestamp(timestamp), timestamp))
+
+    ___send = lambda j, o:bft_to_client((j,o))
+    ___send(-2,timestamp)
+    #print(type(float(server_bft_mpq.get()[0])))
+    #print(type(timestamp))
+    #print(datetime.now(eastern).timestamp()>timestamp-8)
+
+    while datetime.now(eastern).timestamp()<timestamp:
+        #print("node ",i," now time: ",datetime.now(eastern).timestamp())
+        #print("node ",i," break time: ", timestamp)
+        #print(datetime.now(eastern).timestamp()<timestamp)
+        try:
+            thing = float(server_bft_mpq.get_nowait()[0])
+            if thing>timestamp:
+                timestamp = thing
+            #print("node ",i," new break time: ",timestamp)
+            #time.sleep(1)
+        except Exception as e:
+            #print(e)
+            continue
+
+    print('shard_id %d, node %d final start time: %s %f' % (shard_id, i, datetime.fromtimestamp(timestamp), timestamp))
     with net_ready.get_lock():
         net_ready.value = True
-    print("network ready!!!")
+
 
 
     start = time.time()
     for j in range(R):
-        logg.info('shard_id %d, node %d BFT round %d' % (shard_id, i, j))
-        print('shard_id %d, node %d BFT round %d' % (shard_id, i, j))
+        logg.info('shard_id %d, node %d BFT round %d, start time %s' % (shard_id, i, j, datetime.now(eastern)))
+        print('shard_id %d, node %d BFT round %d, start time %s' % (shard_id, i, j, datetime.now(eastern)))
         #print(f"shard_id {shard_id}, node {i} BFT round {j}")
         bft_thread = Greenlet(bft.run)
         bft_thread.start()
