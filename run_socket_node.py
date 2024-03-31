@@ -1,5 +1,5 @@
 import sqlite3
-from gevent import monkey;
+from gevent import monkey
 
 monkey.patch_all(thread=False)
 
@@ -10,8 +10,10 @@ import os
 import pickle
 import re
 
-from datetime import datetime
+from datetime import datetime, timezone
 import pytz
+
+import ntplib
 
 
 from gevent import Greenlet
@@ -30,6 +32,20 @@ from gevent.queue import Queue
 import gevent
 
 server_bft_mpq = mpQueue()
+
+def fetch_time_bias(ntp_server="pool.ntp.org"):
+    while True:
+        try:
+            ntp_client = ntplib.NTPClient()
+            response = ntp_client.request(ntp_server, version=3, timeout=1)
+            now = datetime.now(timezone.utc)
+            utc_time = response.tx_time
+            time_bias = utc_time - now.timestamp()
+            return time_bias
+        except Exception as e:
+            #print("Failed to fetch NTP time:", e)
+            continue
+
 
 def parse_shard_info(tx):
     input_shards = re.findall(r'Input Shard: (\[.*?\])', tx)[0]
@@ -193,34 +209,71 @@ if __name__ == '__main__':
         time.sleep(0.2)
         #print("waiting for self-node ready...")
 
-    print('shard_id %d, node %d ready' % (shard_id, i))
-
-    eastern = pytz.timezone('Asia/Shanghai')
-    eastern_time = datetime.now(eastern)
-    timestamp = eastern_time.timestamp() + 15
-    print('shard_id %d, node %d expected-start-time(global): %s %f' % (shard_id, i, datetime.fromtimestamp(timestamp), timestamp))
-
+    isfinish = 0
+    ismodified = 0
+    timestamp = datetime.now().timestamp() - 100
     ___send = lambda j, o:bft_to_client((j,o))
+
+    def timestamp_broadcast():
+        global isfinish,ismodified
+        while isfinish != 1:
+            time.sleep(0.1)
+            if ismodified:
+                print("shard_id %d, node %d refresh timestamp, current start time %s" % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc)))
+                logg.info("shard_id %d, node %d refresh timestamp, current start time %s" % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc)))
+                ___send(-2,timestamp)
+                ismodified = 0
+
+    gevent.spawn(timestamp_broadcast)
+    time.sleep(1)
+
+    print('shard_id %d, node %d ready' % (shard_id, i))
+    logg.info('shard_id %d, node %d ready' % (shard_id, i))
+
+
+    time_bias = fetch_time_bias()
+    print('shard_id %d, node %d time_bias:%f' % (shard_id, i, time_bias))
+    logg.info('shard_id %d, node %d time_bias:%f' % (shard_id, i, time_bias))
+
+    #time_bias = 0
+    timestamp = datetime.now().timestamp() + 15 + time_bias
+
+    print('shard_id %d, node %d expected-start-time(global): %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
+    logg.info('shard_id %d, node %d expected-start-time(global): %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
+
+    #print(timestamp)
     ___send(-2,timestamp)
     #print(type(float(server_bft_mpq.get()[0])))
     #print(type(timestamp))
     #print(datetime.now(eastern).timestamp()>timestamp-8)
 
-    while datetime.now(eastern).timestamp()<timestamp:
+    while datetime.now().timestamp()+time_bias<timestamp:
         #print("node ",i," now time: ",datetime.now(eastern).timestamp())
         #print("node ",i," break time: ", timestamp)
         #print(datetime.now(eastern).timestamp()<timestamp)
+        #print(datetime.now().timestamp()+time_bias,timestamp)
         try:
-            thing = float(server_bft_mpq.get_nowait()[0])
+            #thing = server_bft_mpq.get_nowait()
+            #print(thing)
+            thing = float(server_bft_mpq.get_nowait()[1])
+            #print(datetime.utcfromtimestamp(thing).replace(tzinfo=timezone.utc))
             if thing>timestamp:
                 timestamp = thing
+                ismodified = 1
             #print("node ",i," new break time: ",timestamp)
             #time.sleep(1)
         except Exception as e:
-            #print(e)
-            continue
+            time.sleep(0.1)
 
-    print('shard_id %d, node %d final start time: %s %f' % (shard_id, i, datetime.fromtimestamp(timestamp), timestamp))
+    isfinish = 1
+
+    print('shard_id %d, node %d final negotiated start time: %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
+    logg.info('shard_id %d, node %d final negotiated start time: %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
+
+    timestamp = datetime.now().timestamp()+time_bias
+
+    print('shard_id %d, node %d final start time: %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
+    logg.info('shard_id %d, node %d final start time: %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
     with net_ready.get_lock():
         net_ready.value = True
 
@@ -228,8 +281,8 @@ if __name__ == '__main__':
 
     start = time.time()
     for j in range(R):
-        logg.info('shard_id %d, node %d BFT round %d, start time %s' % (shard_id, i, j, datetime.now(eastern)))
-        print('shard_id %d, node %d BFT round %d, start time %s' % (shard_id, i, j, datetime.now(eastern)))
+        logg.info('shard_id %d, node %d BFT round %d, start time %s' % (shard_id, i, j, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc)))
+        print('shard_id %d, node %d BFT round %d, start time %s' % (shard_id, i, j, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc)))
         #print(f"shard_id {shard_id}, node {i} BFT round {j}")
         bft_thread = Greenlet(bft.run)
         bft_thread.start()
