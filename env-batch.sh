@@ -31,7 +31,7 @@ sudo make test
 cd ..
 
 python3 -m pip install --upgrade pip
-sudo pip3 install gevent setuptools gevent numpy ecdsa pysocks gmpy2 zfec gipc pycrypto coincurve portalocker pytz
+sudo pip3 install gevent setuptools gevent numpy ecdsa pysocks gmpy2 zfec gipc pycrypto coincurve portalocker pytz ntplib
 
 #git clone -b speed-kronos-sqlite3 https://github.com/hidden-er/kronos.git 
 #cd kronos
