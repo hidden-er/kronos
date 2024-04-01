@@ -34,6 +34,7 @@ import gevent
 server_bft_mpq = mpQueue()
 
 def fetch_time_bias(ntp_server="pool.ntp.org"):
+    num = 0
     while True:
         try:
             ntp_client = ntplib.NTPClient()
@@ -43,7 +44,8 @@ def fetch_time_bias(ntp_server="pool.ntp.org"):
             time_bias = utc_time - now.timestamp()
             return time_bias
         except Exception as e:
-            #print("Failed to fetch NTP time:", e)
+            print("Failed to fetch NTP time:", e, num)
+            num += 1
             continue
 
 
@@ -292,7 +294,7 @@ if __name__ == '__main__':
     with stop.get_lock():
         stop.value = True
         #print("shard_id ", shard_id, "node ",i," stop; total time:",time.time()-start - 2)
-        total_time = time.time()-start - 2
+        total_time = time.time() - start - 3
 
 
     with open(f'log/consensus-node-{i + shard_id * N}.log','r') as f:
