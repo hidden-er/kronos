@@ -218,13 +218,20 @@ if __name__ == '__main__':
 
     def timestamp_broadcast():
         global isfinish,ismodified
+        cnt = 0
         while isfinish != 1:
             time.sleep(0.1)
+            cnt += 1
             if ismodified:
                 print("shard_id %d, node %d refresh timestamp, current start time %s" % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc)))
                 logg.info("shard_id %d, node %d refresh timestamp, current start time %s" % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc)))
                 ___send(-2,timestamp)
                 ismodified = 0
+                cnt = 0
+            if cnt >= 20:
+                cnt = 0
+                ___send(-2, timestamp)
+
 
     gevent.spawn(timestamp_broadcast)
     time.sleep(1)
