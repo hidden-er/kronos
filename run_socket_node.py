@@ -228,7 +228,7 @@ if __name__ == '__main__':
                 ___send(-2,timestamp)
                 ismodified = 0
                 cnt = 0
-            if cnt >= 30:
+            if cnt >= 20:
                 cnt = 0
                 ___send(-2, timestamp)
 
@@ -245,7 +245,7 @@ if __name__ == '__main__':
     logg.info('shard_id %d, node %d time_bias:%f' % (shard_id, i, time_bias))
 
     #time_bias = 0
-    timestamp = datetime.now().timestamp() + 100 + time_bias
+    timestamp = datetime.now().timestamp() + 45 + time_bias
 
     print('shard_id %d, node %d expected-start-time(global): %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
     logg.info('shard_id %d, node %d expected-start-time(global): %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))

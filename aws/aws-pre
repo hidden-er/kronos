@@ -1,31 +1,34 @@
 #!/bin/bash
-# the number of remove AWS servers
-N=8
+
+# the number of AWS servers to remove
+N=
 
 # the number of nodes on each server
-node=16
+node=
 
 # public IPs --- This is the public IPs of AWS servers
-pubIPsVar=([0]='18.135.17.154'
-  [1]='18.133.238.135'
-  [2]='18.171.177.78'
-  [3]='18.171.177.233'
-  [4]='18.170.224.66'
-  [5]='3.10.198.201'
-  [6]='3.8.48.231'
-  [7]='18.133.244.123')
+pubIPsVar=(
+[0]=''
+)
+
 
 # Init all servers
  i=0; while [ $i -le $(( N-1 )) ]; do
- scp -o "StrictHostKeyChecking no" -i "/home/ubuntu/test_large.pem" /home/ubuntu/env-batch.sh ubuntu@${pubIPsVar[i]}:/home/ubuntu/  
+ scp -o "StrictHostKeyChecking no" -i "/home/ubuntu/test_large.pem" /home/ubuntu/env-batch.sh ubuntu@${pubIPsVar[i]}:/home/ubuntu/
  ssh -o "StrictHostKeyChecking no" -i "/home/ubuntu/test_large.pem" ubuntu@${pubIPsVar[i]} "chmod 777 /home/ubuntu/env-batch.sh && sudo nohup ./env-batch.sh > env-log.txt" &
  i=$(( i+1 ))
  done
- 
+
 # Clone code,config and keys to all remote AWS servers from github
  i=0; while [ $i -le $(( N-1 )) ]; do
  ssh -o "StrictHostKeyChecking no" -i "/home/ubuntu/test_large.pem" ubuntu@${pubIPsVar[i]} "sudo rm -r /home/ubuntu/kronos"
- ssh -o "StrictHostKeyChecking no" -i "/home/ubuntu/test_large.pem" ubuntu@${pubIPsVar[i]} "git clone --branch speeddumbo-2PC-sqlite3 https://github.com/hidden-er/kronos.git"
+ ssh -o "StrictHostKeyChecking no" -i "/home/ubuntu/test_large.pem" ubuntu@${pubIPsVar[i]} "git clone --branch main https://github.com/hidden-er/kronos.git" &
+ i=$(( i+1 ))
+ done
+
+ sleep 10
+
+ i=0; while [ $i -le $(( N-1 )) ]; do
  ssh -o "StrictHostKeyChecking no" -i "/home/ubuntu/test_large.pem" ubuntu@${pubIPsVar[i]} "chmod -R 777 /home/ubuntu/kronos"  &
  i=$(( i+1 ))
  done

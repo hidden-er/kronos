@@ -704,7 +704,7 @@ class Dumbo():
         send(-1, ('BREAK_INSIDE', '', ()))
 
         while True:
-            if break_bt_count == self.shard_num and break_is_count == self.N:
+            if break_bt_count >= (self.shard_num*2/3) and break_is_count >= (self.N*3/4):
             #if break_count == self.N:
                 break
             time.sleep(0)
