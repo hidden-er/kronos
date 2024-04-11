@@ -213,7 +213,7 @@ if __name__ == '__main__':
 
     isfinish = 0
     ismodified = 0
-    timestamp = datetime.now().timestamp() - 100
+    timestamp = datetime.now().timestamp() - 200
     ___send = lambda j, o:bft_to_client((j,o))
 
     def timestamp_broadcast():
@@ -245,7 +245,7 @@ if __name__ == '__main__':
     logg.info('shard_id %d, node %d time_bias:%f' % (shard_id, i, time_bias))
 
     #time_bias = 0
-    timestamp = datetime.now().timestamp() + 30 + time_bias
+    timestamp = datetime.now().timestamp() + 100 + time_bias
 
     print('shard_id %d, node %d expected-start-time(global): %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
     logg.info('shard_id %d, node %d expected-start-time(global): %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
