@@ -1,69 +1,75 @@
-import os
-import re
+import boto3
 
-from collections import defaultdict
+def extract_unique_public_ips(nested_dict, key_to_extract):
+    """
+    递归地遍历多层嵌套字典，提取并去重给定键的值。
 
-# 正则表达式
-pattern = re.compile(
-    r"shard_id (\d+) node (\d+) stop; total time: (\d+\.\d+); total TPS: (\d+\.\d+); average latency: (\d+\.\d+)")
+    :param nested_dict: 要遍历的多层嵌套字典
+    :param key_to_extract: 要提取的键（例如，“Public IP”）
+    :return: 包含所有找到的唯一值的集合
+    """
 
-# 指定文件夹路径
-folder_path = 'C:\\Users\Dell\Desktop\\fsdownload\\total-log'
+    def recurse_items(current_item):
+        if isinstance(current_item, dict):
+            for key, value in current_item.items():
+                if key == key_to_extract:
+                    unique_ips.add(value)
+                else:
+                    recurse_items(value)
+        elif isinstance(current_item, list):
+            for item in current_item:
+                recurse_items(item)
 
-matches =  []
+    unique_ips = set()
+    recurse_items(nested_dict)
+    return list(unique_ips)
 
-# 遍历文件夹
-for root, dirs, files in os.walk(folder_path):
-    for filename in files:
-        file_path = os.path.join(root, filename)
+# 定义一个Python函数来生成并返回上述bash脚本内容
+def generate_bash_script(public_ips,node=1):
+    """
+    生成一个Bash脚本，该脚本使用给定的公共IP地址。
 
-        # 确保是文件且不是目录
-        if os.path.isfile(file_path):
-            with open(file_path, 'r', encoding='utf-8') as file:
-                # 读取文件内容
-                content = file.read()
+    :param public_ips: 公共IP地址的列表
+    :return: Bash脚本的字符串表示
+    """
+    n = len(public_ips)  # AWS服务器的数量
+    #node = 1  # 每个服务器上的节点数
 
-                # 在内容中查找匹配项
-                matches += pattern.findall(content)
+    script_lines = [
+        "#!/bin/bash",
+        "",
+        f"# the number of AWS servers to remove",
+        f"N={n}",
+        "",
+        f"# the number of nodes on each server",
+        f"node={node}",
+        "",
+        f"# public IPs --- This is the public IPs of AWS servers"
+    ]
 
-#print(matches)
+    # 添加公共IP地址
+    pub_ips_lines = ["pubIPsVar=("]
+    i=0
+    for ip in public_ips:
+        pub_ips_lines.append(f"[{i}]='{ip}'")
+        i+=1
+    pub_ips_lines.append(")")
 
-data = matches
+    # 合并脚本行
+    script_lines += pub_ips_lines
+    script_lines.append("")
+    return "\n".join(script_lines)
 
-# 用于存储每组的TPS和latency值
-grouped_data = defaultdict(list)
+unique_public_ips= []
 
-# 遍历数据并分组
-for item in data:
-    group_id = item[0]
-    tps = float(item[3])
-    latency = float(item[4])
-    grouped_data[group_id].append((tps, latency))
-
-# 用于存储计算结果
-group_averages = {}
-total_tps = 0
-total_latency = 0
-count = 0
-
-# 计算每组的平均TPS和latency
-for group_id, values in grouped_data.items():
-    avg_tps = sum(tps for tps, _ in values) / len(values)
-    avg_latency = sum(latency for _, latency in values) / len(values)
-    group_averages[group_id] = (avg_tps, avg_latency)
-    total_tps += avg_tps
-    total_latency += avg_latency
-    count += 1
-
-# 计算所有组的latency的整体平均值
-expect_len = 8
-overall_avg_latency = total_latency / count
+region_names = ['eu-west-2','ap-east-1','us-east-1','ap-northeast-1']
+for region_name in region_names:
+    ec2 = boto3.client('ec2', region_name=region_name)
+    response = ec2.describe_instances()
+    unique_public_ips.extend(extract_unique_public_ips(response, 'PublicIp'))
 
 
-print("每组的平均TPS和latency：")
-for group_id, averages in group_averages.items():
-    print(f"组 {group_id}: TPS = {averages[0]:.3f}, Latency = {averages[1]:.3f}")
+# 生成脚本
+bash_script = generate_bash_script(unique_public_ips)
+print(bash_script)
 
-print(f"实际收到数据组数：{count}")
-print(f"\n不同组的TPS累加总和: {total_tps/count*expect_len:.3f}")
-print(f"所有组的latency平均值: {overall_avg_latency:.3f}")
