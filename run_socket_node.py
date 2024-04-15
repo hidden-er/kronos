@@ -214,7 +214,7 @@ if __name__ == '__main__':
     round_delay = sum(round_numbers) / len(round_numbers)
     block_delay = sum(block_numbers) / len(block_numbers)
 
-    num = 0.7
+    num = 0.3
     latency = num * block_delay + (1 - num) * (block_delay + round_delay)
     
     cur.execute('SELECT * FROM txlist')
