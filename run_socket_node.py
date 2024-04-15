@@ -158,7 +158,7 @@ if __name__ == '__main__':
     tmp = 0
     for j in range(tx_num):
         random.seed(time.time())
-        if random.random() < 0.7:
+        if random.random() < 0.3:
             tx = inter_tx_generator(250, shard_id)
         else:
             input_shards, input_valids, output_shard, output_valid = parse_shard_info(TXs[tmp])
@@ -214,7 +214,7 @@ if __name__ == '__main__':
     round_delay = sum(round_numbers) / len(round_numbers)
     block_delay = sum(block_numbers) / len(block_numbers)
 
-    num = 0.7
+    num = 0.3
     latency = num * block_delay + (1 - num) * (block_delay + round_delay)
     
     cur.execute('SELECT * FROM txlist')
