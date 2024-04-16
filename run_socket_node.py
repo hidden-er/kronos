@@ -225,12 +225,12 @@ if __name__ == '__main__':
             if ismodified:
                 print("shard_id %d, node %d refresh timestamp, current start time %s" % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc)))
                 logg.info("shard_id %d, node %d refresh timestamp, current start time %s" % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc)))
-                ___send(-2,timestamp)
+                ___send(-4,timestamp)
                 ismodified = 0
                 cnt = 0
-            if cnt >= 20:
+            if cnt >= 30:
                 cnt = 0
-                ___send(-2, timestamp)
+                ___send(-4, timestamp)
 
 
     gevent.spawn(timestamp_broadcast)
@@ -251,7 +251,7 @@ if __name__ == '__main__':
     logg.info('shard_id %d, node %d expected-start-time(global): %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
 
     #print(timestamp)
-    ___send(-2,timestamp)
+    ___send(-4,timestamp)
     #print(type(float(server_bft_mpq.get()[0])))
     #print(type(timestamp))
     #print(datetime.now(eastern).timestamp()>timestamp-8)
