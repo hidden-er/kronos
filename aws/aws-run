@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# the number of AWS servers to remove
+N=
+
+# the number of nodes on each server
+node=
+
+# public IPs --- This is the public IPs of AWS servers
+pubIPsVar=(
+[0]=''
+)
+
+# Start Protocols at all remote AWS servers
+ i=0
+ while [ $i -le $(( N-1 )) ]; do
+    ssh -o "StrictHostKeyChecking no" -i "/home/ubuntu/test_large.pem" ubuntu@${pubIPsVar[i]} "export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/lib; export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib; cd kronos; nohup ./start.sh 32 8 2 2000 5 $(( i * node )) $node 1400 6720 > server-$i.out" &
+ i=$(( i+1 ))
+ done
+

@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# the number of AWS servers to remove
+N=
+
+# the number of nodes on each server
+node=
+
+# public IPs --- This is the public IPs of AWS servers
+pubIPsVar=(
+[0]=''
+)
+
+# 脚本接收一个可选参数 "--keys"
+if [ "$1" == "--keys" ]; then
+    replace_keys=1
+else
+    replace_keys=0
+fi
+
+# Generate hosts.config
+rm -f hosts.config
+i=0
+while [ $i -le $(( N-1 )) ]; do
+    j=0
+    while [ $j -lt $(( node )) ]; do
+        num=$(( i * node + j ))
+        echo "$num 0.0.0.0 ${pubIPsVar[$i]} $(( $((2500 * $j)) + 10000 ))" >> hosts.config
+        j=$(( j+1 ))
+    done
+    i=$(( i+1 ))
+done
+
+# Clone config to all remote AWS servers
+i=0
+while [ $i -le $(( N-1 )) ]; do
+    scp -o "StrictHostKeyChecking no" -i "/home/ubuntu/test_large.pem" /home/ubuntu/hosts.config ubuntu@${pubIPsVar[i]}:/home/ubuntu/kronos/ &
+    i=$(( i+1 ))
+done
+
+# 当指定 --keys 参数时, 替换 keys 文件
+if [ $replace_keys -eq 1 ]; then
+    i=0
+    while [ $i -le $(( N-1 )) ]; do
+        ssh -o "StrictHostKeyChecking no" -i "/home/ubuntu/test_large.pem" ubuntu@${pubIPsVar[i]} "sudo rm -r /home/ubuntu/kronos/keys" &
+        i=$(( i+1 ))
+    done
+    
+    sleep 5
+
+    i=0
+    while [ $i -le $(( N-1 )) ]; do
+        scp -o "StrictHostKeyChecking no" -r -i "/home/ubuntu/test_large.pem" /home/ubuntu/keys ubuntu@${pubIPsVar[i]}:/home/ubuntu/kronos/ &
+        i=$(( i+1 ))
+    done
+fi
+
+# 确保所有后台任务完成
+wait
+

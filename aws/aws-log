@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# the number of AWS servers to remove
+N=
+
+# the number of nodes on each server
+node=
+
+# public IPs --- This is the public IPs of AWS servers
+pubIPsVar=(
+[0]=''
+)
+
+
+# 判断命令行参数中是否包含--debug
+DEBUG_MODE=0
+for arg in "$@"
+do
+    if [ "$arg" == "--debug" ]; then
+        DEBUG_MODE=1
+    fi
+done
+
+i=0
+while [ $i -le $(( N-1 )) ]
+do
+    # 总是执行第一个scp命令
+    scp -o "StrictHostKeyChecking no" -i "/home/ubuntu/test_large.pem" ubuntu@${pubIPsVar[i]}:/home/ubuntu/kronos/server-$i.out /home/ubuntu/total-log &
+
+    # 如果DEBUG_MODE为1，则执行第二个scp命令
+    if [ $DEBUG_MODE -eq 1 ]; then
+        scp -o "StrictHostKeyChecking no" -i "/home/ubuntu/test_large.pem" -r ubuntu@${pubIPsVar[i]}:/home/ubuntu/kronos/log /home/ubuntu/total-log/log-$i &
+    fi
+
+    i=$(( i+1 ))
+done
+
+ 
