@@ -231,7 +231,6 @@ class Dumbo():
         break_bt_count = 0
         break_is_count = 0
         break_is_tag = 0
-
         pb_recvs = [Queue() for _ in range(N)]
         vacs_recv = Queue()
         tpke_recv = Queue()
@@ -421,6 +420,7 @@ class Dumbo():
                                 #TXs = read_pkl_file(self.TXs)
                                 cur = self.TXs.cursor()
                                 #print('[FINISH] before set value=1 TXs have %d txs' %len(TXs))
+                                cnt = 0
                                 for tx_pool in txs:
                                     '''input_shards, input_valids, output_shard, output_valid = parse_shard_info(tx_pool)
                                     if self.pool[tx_pool] == len(input_shards):
@@ -433,9 +433,10 @@ class Dumbo():
                                     #TXs.remove(tx_pool)
                                     #TXs.append(tx_to_append)
                                     cur.execute('INSERT INTO txlist (tx) VALUES (?)', (tx_to_append,))
+                                    cnt += 1
                                     self.TXs.commit()
                                     del self.pool[tx_pool]
-
+                                #print('[插入跨片交易] Node %d in shard %d 插入跨片交易 %d 个' % (self.id, self.shard_id, cnt))
                                 #print('[FINISH] after set value=1 TXs have %d txs' %len(TXs))
                                 #write_pkl_file(TXs, self.TXs)
 
@@ -474,6 +475,7 @@ class Dumbo():
                                     for tx in txs:
                                         _, _, output_shard, _ = parse_shard_info(tx)
                                         grouped_invalid_txs[output_shard].append(tx)
+                                    #print(grouped_invalid_txs)
                                     for shard in grouped_invalid_txs:
                                         for i in range(self.N):
                                             send(i + shard * self.N, ('CL', '', (txs, Sigma)))
@@ -488,27 +490,41 @@ class Dumbo():
                         invalid_txs, Sigma = msg
                         #print('[CL] Node %d in shard %d receive CL message from %d ' % (
                         #self.id, self.shard_id, sender))
+
+                        '''
                         try:
                             for item in Sigma:
                                 (_sender, sig_p) = item
                                 assert ecdsa_vrfy(self.sPK2s[_sender % self.N], json.dumps(invalid_txs), sig_p)
                                 # print("CL signature verified!")
                         except AssertionError:
-                            #print("CL ecdsa signature failed!")
+                            print("CL ecdsa signature failed!")
                             if self.logger is not None:
                                 self.logger.info("CL ecdsa signature failed!")
                             continue
+                        '''
 
+                        #print('[接收回退交易] Node %d in shard %d 接收回退交易 %s' % (self.id, self.shard_id, invalid_txs))
+                        cur = self.TXs.cursor()
+                        BACK_TX_CNT = 0
                         for tx in invalid_txs:
-                            input_shards, _, output_shard, _ = parse_shard_info(tx)
+                            input_shards, input_valid, output_shard, output_valid = parse_shard_info(tx)
                             if self.shard_id in input_shards:
-                                '''TODO: 本分片作为输入分片 已对该交易进行了BFT共识 需要构造BACK-TX 将该输入退还至原地址''' 
-                                pass
+                                tx_to_append = tx.replace(f'Input Valid: {input_valid}', f'Input Valid: {1}')
+                                tx_to_append = tx_to_append.replace(f'Input Shard: {input_shards}', f'Input Shard: {self.shard_id}')
+                                tx_to_append = tx_to_append.replace(f'Output Shard: {output_shard}', f'Output Shard: {self.shard_id}')
+                                cur.execute('INSERT INTO txlist (tx) VALUES (?)', (tx_to_append,))
+                                BACK_TX_CNT += 1
+                                self.TXs.commit()
+                                #pass
                             
                             if self.shard_id == output_shard:
                                 if tx in self.pool:
                                     #print("DELETE")
-                                    del self.pool[tx]                       
+                                    del self.pool[tx]
+
+                        print('[插入回退交易] Node %d in shard %d 插入回退交易 %d 个' % (self.id, self.shard_id, BACK_TX_CNT))
+
                     except Exception as e:
                         print(e)
                         continue            

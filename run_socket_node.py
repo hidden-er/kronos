@@ -115,10 +115,12 @@ if __name__ == '__main__':
                         help='whether to mute a third of nodes', type=bool, default=False)
     parser.add_argument('--D', metavar='D', required=False,
                         help='whether to debug mode', type=bool, default=False)
+    parser.add_argument('--Crate', metavar='Crate', required=False,
+                        help='percentage of cross-shard transcation', type=float, default=0.1)
     args = parser.parse_args()
 
-    sid, i, shard_id, tx_num, shard_num, N, f, B, K, R, S, M, D = (
-        args.sid, args.id, args.shard_id, args.tx_num, args.shard_num, args.N, args.f, args.B, args.K, args.R, args.S, args.M, args.D)
+    sid, i, shard_id, tx_num, shard_num, N, f, B, K, R, S, M, D, Crate = (
+        args.sid, args.id, args.shard_id, args.tx_num, args.shard_num, args.N, args.f, args.B, args.K, args.R, args.S, args.M, args.D, args.Crate)
     rnd = random.Random(sid)
 
 
@@ -188,12 +190,12 @@ if __name__ == '__main__':
     tmp = 0
     for j in range(tx_num):
         random.seed(time.time())
-        if random.random() < 0.9:
+        if random.random() < 1 - Crate:
             tx = inter_tx_generator(250, shard_id)
         else:
             input_shards, input_valids, output_shard, output_valid = parse_shard_info(TXs[tmp])
             tmp += 1
-            while shard_id not in input_shards and (shard_id != output_shard or output_valid != 1):
+            while shard_id not in input_shards:
                 input_shards, input_valids, output_shard, output_valid = parse_shard_info(TXs[tmp])
                 tmp += 1
 
@@ -224,7 +226,7 @@ if __name__ == '__main__':
             time.sleep(0.1)
             cnt += 1
             if ismodified:
-                print("shard_id %d, node %d refresh timestamp, current start time %s" % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc)))
+                #print("shard_id %d, node %d refresh timestamp, current start time %s" % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc)))
                 logg.info("shard_id %d, node %d refresh timestamp, current start time %s" % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc)))
                 ___send(-4,timestamp)
                 ismodified = 0
@@ -237,7 +239,7 @@ if __name__ == '__main__':
     gevent.spawn(timestamp_broadcast)
     time.sleep(1)
 
-    print('shard_id %d, node %d ready' % (shard_id, i))
+    #print('shard_id %d, node %d ready' % (shard_id, i))
     logg.info('shard_id %d, node %d ready' % (shard_id, i))
 
 
@@ -249,7 +251,7 @@ if __name__ == '__main__':
     #time_bias = 0
     timestamp = datetime.now().timestamp() + 5 + time_bias
 
-    print('shard_id %d, node %d expected-start-time(global): %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
+    #print('shard_id %d, node %d expected-start-time(global): %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
     logg.info('shard_id %d, node %d expected-start-time(global): %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
 
     #print(timestamp)
@@ -278,12 +280,12 @@ if __name__ == '__main__':
 
     isfinish = 1
 
-    print('shard_id %d, node %d final negotiated start time: %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
+    #print('shard_id %d, node %d final negotiated start time: %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
     logg.info('shard_id %d, node %d final negotiated start time: %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
 
     timestamp = datetime.now().timestamp()+time_bias
 
-    print('shard_id %d, node %d final start time: %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
+    #print('shard_id %d, node %d final start time: %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
     logg.info('shard_id %d, node %d final start time: %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
     with net_ready.get_lock():
         net_ready.value = True
@@ -318,8 +320,7 @@ if __name__ == '__main__':
     round_delay = sum(round_numbers) / len(round_numbers)
     block_delay = sum(block_numbers) / len(block_numbers)
 
-    num = 0.9
-    latency = num * block_delay + (1 - num) * (block_delay + round_delay)
+    latency = (1-Crate) * block_delay + Crate * (block_delay + round_delay)
     
     cur.execute('SELECT * FROM txlist')
     TXs = cur.fetchall()
