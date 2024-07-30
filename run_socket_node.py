@@ -249,7 +249,7 @@ if __name__ == '__main__':
     #logg.info('shard_id %d, node %d time_bias:%f' % (shard_id, i, time_bias))
 
     #time_bias = 0
-    timestamp = datetime.now().timestamp() + 5 + time_bias
+    timestamp = datetime.now().timestamp() + 15 + time_bias
 
     #print('shard_id %d, node %d expected-start-time(global): %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
     logg.info('shard_id %d, node %d expected-start-time(global): %s %f' % (shard_id, i, datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc), timestamp))
